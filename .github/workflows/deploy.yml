@@ -1,0 +1,58 @@
+name: Deploy to Hetzner on push
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Upload project to server (scp)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          source: |
+            .
+          target: ${{ secrets.DEPLOY_PATH || '/home/deploy/apps/taskdesk' }}
+          overwrite: true
+          rm: true
+          strip_components: 0
+          # exclude git and local stuff
+          exclude: |
+            .git*
+            **/__pycache__/**
+            venv/**
+            node_modules/**
+
+      - name: Setup app on server & restart
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.HETZNER_SSH_KEY }}
+          script: |
+            set -e
+            cd ${DEPLOY_PATH:-/home/deploy/apps/taskdesk}
+
+            # Create/refresh virtualenv
+            test -d venv || python3 -m venv venv
+            ./venv/bin/pip install --upgrade pip
+            if [ -f requirements.txt ]; then
+              ./venv/bin/pip install -r requirements.txt
+            fi
+
+            # Optional: run DB migrations if you have Alembic/Flask-Migrate
+            # ./venv/bin/flask db upgrade
+
+            # Start or restart the service
+            sudo systemctl restart taskdesk.service
+
+            # Health check (optional, adjust path)
+            curl -f http://127.0.0.1:8000/ || (sudo journalctl -u taskdesk.service --no-pager -n 200 && false)
