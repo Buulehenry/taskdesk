@@ -6,6 +6,7 @@ from flask_login import current_user
 
 
 def roles_required(*allowed_roles):
+    """roles"""
     def decorator(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
