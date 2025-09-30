@@ -22,7 +22,7 @@ jobs:
             .
           target: ${{ secrets.DEPLOY_PATH || '/home/deploy/apps/taskdesk' }}
           overwrite: true
-          rm: true
+          rm: false
           strip_components: 0
           # exclude git and local stuff
           exclude: |
@@ -30,6 +30,10 @@ jobs:
             **/__pycache__/**
             venv/**
             node_modules/**
+            .env
+            *.env
+            uploads/**
+            media/**
 
       - name: Setup app on server & restart
         uses: appleboy/ssh-action@v1.0.3
