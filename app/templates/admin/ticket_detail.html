@@ -1,0 +1,88 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <h1 class="mb-0">Ticket #{{ ticket.ticket_id }}</h1>
+        <span class="badge bg-{{ 'success' if ticket.status=='closed' else ('warning' if ticket.status=='pending' else 'primary') }}">{{ ticket.status }}</span>
+        <div class="ms-auto">
+            <form class="d-inline" method="post" action="{{ url_for('admin.ticket_status', ticket_id=ticket.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select class="form-select d-inline w-auto" name="status">
+          {% for s in ['open','pending','closed'] %}
+            <option value="{{ s }}" {{ 'selected' if ticket.status==s else '' }}>{{ s|capitalize }}</option>
+          {% endfor %}
+        </select>
+                <button class="btn btn-outline-primary">Update</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <ul class="list-unstyled">
+                {% for m in messages_page.items %}
+                <li class="mb-3">
+                    <div class="p-3 rounded border {% if m.author_role=='admin' %}bg-success-subtle{% else %}bg-primary-subtle{% endif %}">
+                        <div class="small text-muted mb-1">
+                            {{ 'Admin' if m.author_role=='admin' else 'User' }} · {{ m.created_at }}
+                        </div>
+                        <div style="white-space:pre-wrap">{{ m.body }}</div>
+                        {% if m.attachments and m.attachments|length %}
+                        <ul class="mt-2">
+                            {% for a in m.attachments %}
+                            <li><i class="bi bi-paperclip"></i> {{ a.filename }} <span class="text-muted">({{ a.size_bytes }} bytes)</span></li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+
+            {% if messages_page.pages>1 %}
+            <nav class="mt-2">
+                <ul class="pagination pagination-sm">
+                    <li class="page-item {{ 'disabled' if not messages_page.has_prev }}"><a class="page-link" href="{{ url_for('admin.ticket_detail', ticket_id=ticket.id, page=messages_page.prev_num) }}">Prev</a></li>
+                    <li class="page-item disabled"><span class="page-link">Page {{ messages_page.page }} / {{ messages_page.pages }}</span></li>
+                    <li class="page-item {{ 'disabled' if not messages_page.has_next }}"><a class="page-link" href="{{ url_for('admin.ticket_detail', ticket_id=ticket.id, page=messages_page.next_num) }}">Next</a></li>
+                </ul>
+            </nav>
+            {% endif %}
+
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Reply as Admin</h5>
+                    <form method="post" action="{{ url_for('admin.ticket_reply', ticket_id=ticket.id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3"><textarea class="form-control" name="body" rows="4" required></textarea></div>
+                        <div class="mb-3">
+                            <label class="form-label">Attachments</label>
+                            <input type="file" name="attachments" class="form-control" multiple>
+                        </div>
+                        <button class="btn btn-success">Send Reply</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Details</h5>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Name</dt>
+                        <dd class="col-sm-8">{{ ticket.name }}</dd>
+                        <dt class="col-sm-4">Email</dt>
+                        <dd class="col-sm-8">{{ ticket.email }}</dd>
+                        <dt class="col-sm-4">Category</dt>
+                        <dd class="col-sm-8">{{ ticket.category }}</dd>
+                        <dt class="col-sm-4">Created</dt>
+                        <dd class="col-sm-8">{{ ticket.created_at }}</dd>
+                        <dt class="col-sm-4">Updated</dt>
+                        <dd class="col-sm-8">{{ ticket.updated_at }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

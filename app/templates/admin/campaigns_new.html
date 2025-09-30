@@ -1,0 +1,37 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-4">
+    <h1>Create Campaign</h1>
+    <form method="post" action="{{ url_for('admin.campaigns_new') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label class="form-label">Title (internal)</label>
+            <input class="form-control" name="title" required maxlength="160">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Subject</label>
+            <input class="form-control" name="subject" required maxlength="200">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Segment</label>
+            <select class="form-select" name="segment">
+        <option value="subscribers" selected>Subscribers</option>
+        <option value="users">All User Accounts</option>
+        <option value="both">Subscribers + Users</option>
+      </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Body (HTML)</label>
+            <textarea class="form-control" name="body_html" rows="8" placeholder="You can use {{name}}">{{ '<p>Hello {{name}},</p><p>…</p>' }}</textarea>
+            <div class="form-text">Tip: You can include <code>{{'{{name}}'}}</code>.</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Body (Plain Text)</label>
+            <textarea class="form-control" name="body_text" rows="6" placeholder="Hello {{name}}, …"></textarea>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary">Create</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('admin.campaigns_list') }}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

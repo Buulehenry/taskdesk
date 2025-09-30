@@ -1,0 +1,167 @@
+{% extends "base.html" %} {% set title = "Cookies — TaskDesk" %} {% block content %}
+<section class="py-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+        <div>
+            <h1 class="mb-1">Cookies</h1>
+            <p class="text-muted mb-0">Last updated {{ now().date() }}</p>
+        </div>
+        <div class="d-flex gap-2">
+            <!-- Reset/withdraw preferences -->
+            <form method="post" action="{{ url_for('main.cookies_withdraw') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-outline-secondary btn-sm">Reset preferences</button>
+            </form>
+            <!-- Open footer banner-style modal if you want; or save inline below -->
+            <a class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#cookiePrefs">Change preferences</a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">How TaskDesk uses cookies</h5>
+                    <p class="mb-3">
+                        Cookies are small text files placed on your device. We use cookies so the site can function securely, and—if you allow it—so we can understand usage and improve TaskDesk.
+                    </p>
+
+                    <h6 class="mb-2">Categories</h6>
+                    <ul class="mb-3">
+                        <li class="mb-2"><strong>Essential (required)</strong> — keep you signed in, protect forms (CSRF), and ensure core features work. These cannot be switched off.</li>
+                        <li class="mb-2"><strong>Analytics (optional)</strong> — aggregate, pseudonymous usage data that helps us measure performance and improve the product.</li>
+                        <li class="mb-0"><strong>Marketing (optional)</strong> — occasional campaign/attribution cookies. We keep this lightweight and respectful.</li>
+                    </ul>
+
+                    <h6 class="mb-2">Your choices</h6>
+                    <p class="mb-3">
+                        You can accept or reject optional cookies at any time. Use the “Change preferences” button above (or the cookie banner when it first appears). Your choice is stored for up to 12 months unless you clear your browser data.
+                    </p>
+
+                    <h6 class="mb-2">Retention</h6>
+                    <p class="mb-0">
+                        Essential session cookies typically last only for your active session. The consent cookie lasts up to 12 months. Analytics/marketing cookies may persist longer but can be cleared via your browser.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Inline quick preferences (same endpoint as banner/modal) -->
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">Preferences</h6>
+                    <form method="post" action="{{ url_for('main.cookies_consent') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="pEss" checked disabled>
+                            <label class="form-check-label" for="pEss">Essential (required)</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="pAna" name="analytics" {{ 'checked' if cookie_consent.analytics else '' }}>
+                            <label class="form-check-label" for="pAna">Analytics</label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="pMkt" name="marketing" {{ 'checked' if cookie_consent.marketing else '' }}>
+                            <label class="form-check-label" for="pMkt">Marketing</label>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary">Save preferences</button>
+                            <a class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#cookiePrefs">More details</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- At-a-glance cookie list -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">Cookies we set</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Purpose</th>
+                                    <th>Type</th>
+                                    <th>Typical duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>session</code></td>
+                                    <td>Keeps you signed in; CSRF/session security</td>
+                                    <td>Essential</td>
+                                    <td>Session</td>
+                                </tr>
+                                <tr>
+                                    <td><code>remember_token</code></td>
+                                    <td>“Remember me” login (if chosen)</td>
+                                    <td>Essential</td>
+                                    <td>Up to 30 days</td>
+                                </tr>
+                                <tr>
+                                    <td><code>td.consent</code></td>
+                                    <td>Stores your cookie preferences</td>
+                                    <td>Essential</td>
+                                    <td>Up to 12 months</td>
+                                </tr>
+                                <tr>
+                                    <td><code>analytics*</code></td>
+                                    <td>Aggregate usage metrics (if enabled)</td>
+                                    <td>Analytics</td>
+                                    <td>Varies (e.g., 6–13 months)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="small text-muted mt-2">* Only set if you opt in to analytics.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="small text-muted">
+        For more information about how we handle personal data, see our
+        <a href="{{ url_for('main.privacy') }}">Privacy Policy</a>. You can also control cookies in your browser settings. Blocking essential cookies may prevent the site from working correctly.
+    </div>
+</section>
+
+<!-- Reuse the site-wide preferences modal (kept in base.html).
+     Including it here ensures users always have a way to adjust. -->
+<div class="modal fade" id="cookiePrefs" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{{ url_for('main.cookies_consent') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Cookie preferences</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="mEss" checked disabled>
+                        <label class="form-check-label" for="mEss">Essential (required)</label>
+                        <div class="form-text">Security, sessions, and core functionality.</div>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="mAna" name="analytics" {{ 'checked' if cookie_consent.analytics else '' }}>
+                        <label class="form-check-label" for="mAna">Analytics</label>
+                        <div class="form-text">Helps us understand what’s working to improve TaskDesk.</div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="mMkt" name="marketing" {{ 'checked' if cookie_consent.marketing else '' }}>
+                        <label class="form-check-label" for="mMkt">Marketing</label>
+                        <div class="form-text">Used sparingly for campaigns/attribution.</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a class="btn btn-outline-secondary" href="{{ url_for('main.cookies') }}">Learn more</a>
+                    <button class="btn btn-primary">Save preferences</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

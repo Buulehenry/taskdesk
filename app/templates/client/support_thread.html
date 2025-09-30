@@ -1,0 +1,160 @@
+{% extends 'base.html' %} {% set title = 'Support Ticket — ' ~ ticket.ticket_id %} {% block extra_css %}
+<style>
+    .thread-hero {
+        background: var(--bs-body-bg);
+        border-bottom: 1px solid var(--bs-border-color)
+    }
+    
+    .msg {
+        border: 1px solid var(--bs-border-color);
+        border-radius: .75rem;
+        padding: 1rem
+    }
+    
+    .msg.me {
+        background: rgba(13, 110, 253, .05)
+    }
+    
+    .msg.admin {
+        background: rgba(25, 135, 84, .06)
+    }
+    
+    .meta {
+        font-size: .85rem;
+        color: var(--bs-secondary-color)
+    }
+    
+    .bubble {
+        border-radius: 1rem;
+        padding: 0.75rem 1rem
+    }
+    
+    .bubble.me {
+        background: rgba(13, 110, 253, .08)
+    }
+    
+    .bubble.admin {
+        background: rgba(25, 135, 84, .1)
+    }
+    
+    .timeline {
+        list-style: none;
+        padding: 0;
+        margin: 0
+    }
+    
+    .timeline li+li {
+        margin-top: .75rem
+    }
+    
+    .attachments li+li {
+        margin-top: .25rem
+    }
+</style>
+{% endblock %} {% block content %}
+<section class="thread-hero py-4">
+    <div class="container d-flex align-items-center gap-3">
+        <div>
+            <h1 class="mb-1">Ticket #{{ ticket.ticket_id }}</h1>
+            <div class="meta">Category: {{ ticket.category }} · Status:
+                <span class="badge bg-{{ 'success' if ticket.status=='closed' else ('warning' if ticket.status=='pending' else 'primary') }}">{{ ticket.status }}</span> · Opened {{ ticket.created_at }}
+            </div>
+        </div>
+        <div class="ms-auto d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{{ url_for('main.support_my') }}">My Tickets</a> {% if current_user.is_authenticated and current_user.is_admin %}
+            <a class="btn btn-outline-success" href="{{ url_for('admin.ticket_detail', ticket_id=ticket.id) }}">Admin View</a> {% endif %}
+        </div>
+    </div>
+</section>
+
+<div class="container my-4">
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+    <div class="mb-3">
+        {% for category, msg in messages %}
+        <div class="alert alert-{{ 'success' if category=='success' else ('danger' if category in ['danger','error'] else ('warning' if category=='warning' else 'info')) }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-8">
+            <ul class="timeline">
+                {% for m in messages_page.items %}
+                <li>
+                    <div class="bubble {{ 'me' if m.author_role=='user' else ('admin' if m.author_role=='admin' else '') }}">
+                        <div class="meta mb-1">
+                            {% if m.author_role=='admin' %}
+                            <span class="badge text-bg-success">Admin</span> {% else %}
+                            <span class="badge text-bg-primary">You</span> {% endif %} · {{ m.created_at }}
+                        </div>
+                        <div style="white-space:pre-wrap">{{ m.body }}</div>
+                        {% if m.attachments and m.attachments|length %}
+                        <ul class="attachments mt-2">
+                            {% for a in m.attachments %}
+                            <li><i class="bi bi-paperclip"></i> {{ a.filename }} <span class="text-muted">({{ a.size_bytes }} bytes)</span></li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+
+            {% if messages_page.pages > 1 %}
+            <nav class="mt-2" aria-label="Message pages">
+                <ul class="pagination pagination-sm">
+                    <li class="page-item {{ 'disabled' if not messages_page.has_prev }}">
+                        <a class="page-link" href="{{ url_for('main.support_thread', ticket_code=ticket.ticket_id, page=messages_page.prev_num) }}">Prev</a>
+                    </li>
+                    <li class="page-item disabled"><span class="page-link">Page {{ messages_page.page }} / {{ messages_page.pages }}</span></li>
+                    <li class="page-item {{ 'disabled' if not messages_page.has_next }}">
+                        <a class="page-link" href="{{ url_for('main.support_thread', ticket_code=ticket.ticket_id, page=messages_page.next_num) }}">Next</a>
+                    </li>
+                </ul>
+            </nav>
+            {% endif %} {% if ticket.status != 'closed' %}
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5 class="card-title">Reply</h5>
+                    <form method="post" action="{{ url_for('main.support_thread_post', ticket_code=ticket.ticket_id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <textarea class="form-control" name="body" rows="4" required minlength="2" maxlength="5000" placeholder="Write your message…"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Attachments (optional)</label>
+                            <input type="file" name="attachments" class="form-control" multiple accept="image/*,application/pdf,video/mp4,text/plain,application/zip,application/x-zip-compressed" />
+                            <div class="form-text">Up to 5 files, max 10MB each.</div>
+                        </div>
+                        <button class="btn btn-primary" type="submit">Send</button>
+                    </form>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-secondary mt-3">This ticket is closed. You can open a new ticket on the <a href="{{ url_for('main.support') }}#contact">Support page</a>.</div>
+            {% endif %}
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Ticket Info</h5>
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Ticket</dt>
+                        <dd class="col-sm-7">#{{ ticket.ticket_id }}</dd>
+                        <dt class="col-sm-5">Category</dt>
+                        <dd class="col-sm-7">{{ ticket.category }}</dd>
+                        <dt class="col-sm-5">Status</dt>
+                        <dd class="col-sm-7">{{ ticket.status }}</dd>
+                        <dt class="col-sm-5">Opened</dt>
+                        <dd class="col-sm-7">{{ ticket.created_at }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-4">
+    <h1>Tickets</h1>
+    <form class="row g-2 mb-3" method="get">
+        <div class="col-sm-6"><input class="form-control" name="q" placeholder="Search…" value="{{ request.args.get('q','') }}"></div>
+        <div class="col-sm-3">
+            {% set s=request.args.get('status','') %}
+            <select class="form-select" name="status">
+        <option value="">Any status</option>
+        <option value="open" {{ 'selected' if s=='open' else '' }}>Open</option>
+        <option value="pending" {{ 'selected' if s=='pending' else '' }}>Pending</option>
+        <option value="closed" {{ 'selected' if s=='closed' else '' }}>Closed</option>
+      </select>
+        </div>
+        <div class="col-sm-3"><button class="btn btn-primary w-100">Filter</button></div>
+    </form>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in tickets.items %}
+                <tr>
+                    <td>#{{ t.ticket_id }}</td>
+                    <td>{{ t.name }}</td>
+                    <td>{{ t.email }}</td>
+                    <td>{{ t.category }}</td>
+                    <td><span class="badge bg-{{ 'success' if t.status=='closed' else ('warning' if t.status=='pending' else 'primary') }}">{{ t.status }}</span></td>
+                    <td>{{ t.created_at }}</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.ticket_detail', ticket_id=t.id) }}">Open</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if tickets.pages>1 %}
+    <nav class="mt-2">
+        <ul class="pagination">
+            <li class="page-item {{ 'disabled' if not tickets.has_prev }}"><a class="page-link" href="{{ url_for('admin.tickets_list', page=tickets.prev_num, q=request.args.get('q'), status=request.args.get('status')) }}">Prev</a></li>
+            <li class="page-item disabled"><span class="page-link">Page {{ tickets.page }} / {{ tickets.pages }}</span></li>
+            <li class="page-item {{ 'disabled' if not tickets.has_next }}"><a class="page-link" href="{{ url_for('admin.tickets_list', page=tickets.next_num, q=request.args.get('q'), status=request.args.get('status')) }}">Next</a></li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-4">
+    <div class="d-flex align-items-center mb-3">
+        <h1 class="mb-0">Subscribers</h1>
+        <div class="ms-auto d-flex gap-2">
+            <a class="btn btn-outline-secondary" href="{{ url_for('admin.subscribers_export_csv') }}">Export CSV</a>
+            <a class="btn btn-primary" href="{{ url_for('admin.campaigns_new') }}">New Campaign</a>
+        </div>
+    </div>
+
+    <form class="row g-2 mb-3" method="get" action="{{ url_for('admin.subscribers_list') }}">
+        <div class="col-sm-6"><input class="form-control" name="q" placeholder="Search email/name/source…" value="{{ request.args.get('q','') }}"></div>
+        <div class="col-sm-3">
+            {% set s = request.args.get('status','') %}
+            <select class="form-select" name="status">
+        <option value="">Any</option>
+        <option value="active" {{ 'selected' if s=='active' else '' }}>Active</option>
+        <option value="inactive" {{ 'selected' if s=='inactive' else '' }}>Inactive</option>
+      </select>
+        </div>
+        <div class="col-sm-3"><button class="btn btn-outline-primary w-100">Filter</button></div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Email</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Source</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in subs.items %}
+                <tr>
+                    <td>{{ s.email }}</td>
+                    <td>{{ s.name or '—' }}</td>
+                    <td><span class="badge {{ 'bg-success' if s.is_active else 'bg-secondary' }}">{{ 'active' if s.is_active else 'inactive' }}</span></td>
+                    <td>{{ s.source or '—' }}</td>
+                    <td>{{ s.created_at }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if subs.pages > 1 %}
+    <nav class="mt-2">
+        <ul class="pagination">
+            <li class="page-item {{ 'disabled' if not subs.has_prev }}"><a class="page-link" href="{{ url_for('admin.subscribers_list', page=subs.prev_num, q=request.args.get('q'), status=request.args.get('status')) }}">Prev</a></li>
+            <li class="page-item disabled"><span class="page-link">Page {{ subs.page }} / {{ subs.pages }}</span></li>
+            <li class="page-item {{ 'disabled' if not subs.has_next }}"><a class="page-link" href="{{ url_for('admin.subscribers_list', page=subs.next_num, q=request.args.get('q'), status=request.args.get('status')) }}">Next</a></li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

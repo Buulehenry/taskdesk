@@ -1,0 +1,292 @@
+{% extends 'base.html' %} {% block content %} {# Freelancer → Profile Context expected on GET: exps: List[FreelancerExperience] edus: List[FreelancerEducation] (optional) resumes: List[FileAsset] for kind='resume' kyc: latest KycSubmission or None Current
+user object fields referenced: current_user.name, headline, bio, skills, location, portfolio_url, payout_email, role, kyc_status, vetted_status, rating #}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+    <div>
+        <h3 class="mb-0">My Freelancer Profile</h3>
+        <div class="small text-muted">This is what admins use to match you to client tasks.</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% if current_user.vetted_status == 'approved' %}
+        <span class="badge bg-success-subtle text-success border align-self-center">Vetted</span> {% elif current_user.vetted_status == 'rejected' %}
+        <span class="badge bg-danger-subtle text-danger border align-self-center">Vetting rejected</span> {% else %}
+        <span class="badge bg-warning text-dark align-self-center">Vetting pending</span> {% endif %} {% if current_user.rating %}
+        <span class="badge bg-primary-subtle text-primary border align-self-center">★ {{ '%.1f'|format(current_user.rating) }}</span> {% endif %}
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Editable profile + experience/education -->
+    <div class="col-lg-8">
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Profile details</strong>
+                <small class="text-muted">Keep this up to date</small>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Display name</label>
+                            <input name="name" class="form-control" value="{{ current_user.name or '' }}" placeholder="Your professional name">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Location</label>
+                            <input name="location" class="form-control" value="{{ current_user.location or '' }}" placeholder="City, Country">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Headline</label>
+                            <input name="headline" class="form-control" maxlength="160" value="{{ current_user.headline or '' }}" placeholder="e.g., Presentation designer • Market research • Data visualization">
+                            <div class="form-text">Max 160 characters</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">About</label>
+                            <textarea name="bio" class="form-control" rows="5" placeholder="Short bio, what you’re great at, industries you know…">{{ current_user.bio or '' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Skills (comma‑separated)</label>
+                            <input name="skills" class="form-control" value="{{ current_user.skills or '' }}" placeholder="pitch decks, market research, SQL, Python, copywriting">
+                            <div class="form-text">Use common keywords admins will search for.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Portfolio URL</label>
+                            <input name="portfolio_url" type="url" class="form-control" value="{{ current_user.portfolio_url or '' }}" placeholder="https://...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Payout email</label>
+                            <input name="payout_email" type="email" class="form-control" value="{{ current_user.payout_email or '' }}" placeholder="payments@you.com">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label class="form-label">Resume / CV (PDF/DOCX)</label>
+                            <input class="form-control" type="file" name="resume" accept=".pdf,.doc,.docx,.rtf,.txt">
+                            <div class="form-text">Upload a focused resume. You can also link portfolio items above.</div>
+                        </div>
+                        <div class="col-md-4 d-grid">
+                            <button class="btn btn-primary">Save profile</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            {% if resumes and resumes|length %}
+            <div class="card-footer">
+                <div class="small text-muted mb-2">Recent resumes</div>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for r in resumes[:3] %}
+                    <span class="badge bg-light text-dark">{{ r.filename }} • {{ r.uploaded_at }}</span> {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Experience -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Experience</strong>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#expNew">Add</button>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% if exps and exps|length %} {% for e in exps %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold">{{ e.title }}{% if e.company %} — {{ e.company }}{% endif %}</div>
+                                <div class="small text-muted">{{ e.start_date or '—' }} — {{ e.end_date or 'Present' }}</div>
+                                {% if e.summary %}
+                                <div class="mt-1">{{ e.summary }}</div>{% endif %} {% if e.skills %}
+                                <div class="mt-1 small text-muted">Skills: {{ e.skills }}</div>{% endif %}
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#expEdit_{{ e.id }}">Edit</button>
+                                <form method="POST" action="{{ url_for('freelancer.exp_delete', exp_id=e.id) }}" onsubmit="return confirm('Delete this experience?')">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    </li>
+
+                    <!-- Edit Modal -->
+                    <div class="modal fade" id="expEdit_{{ e.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <form class="modal-content needs-validation" method="POST" action="{{ url_for('freelancer.exp_edit', exp_id=e.id) }}" novalidate>
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Edit experience</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                                <div class="modal-body">
+                                    <div class="mb-2">
+                                        <label class="form-label">Title</label>
+                                        <input class="form-control" name="title" value="{{ e.title }}" required>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Company</label>
+                                        <input class="form-control" name="company" value="{{ e.company or '' }}">
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6"><label class="form-label">Start date</label><input class="form-control" type="date" name="start_date" value="{{ e.start_date }}"></div>
+                                        <div class="col-md-6"><label class="form-label">End date</label><input class="form-control" type="date" name="end_date" value="{{ e.end_date }}"></div>
+                                    </div>
+                                    <div class="mb-2"><label class="form-label">Summary</label><textarea class="form-control" name="summary" rows="3">{{ e.summary or '' }}</textarea></div>
+                                    <div class="mb-2"><label class="form-label">Skills (comma‑separated)</label><input class="form-control" name="skills" value="{{ e.skills or '' }}"></div>
+                                </div>
+                                <div class="modal-footer"><button class="btn btn-primary">Save changes</button></div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {% endfor %} {% else %}
+                    <li class="list-group-item text-muted">No experience added yet.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Education (optional) -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Education</strong>
+                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#eduNew">Add</button>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% if edus and edus|length %} {% for ed in edus %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold">{{ ed.school }}{% if ed.degree %} — {{ ed.degree }}{% endif %}</div>
+                                <div class="small text-muted">{{ ed.field or '—' }} • {{ ed.start_year or '—' }}–{{ ed.end_year or '—' }}</div>
+                                {% if ed.notes %}
+                                <div class="mt-1">{{ ed.notes }}</div>{% endif %}
+                            </div>
+                            <form method="POST" action="{{ url_for('freelancer.edu_delete', edu_id=ed.id) }}" onsubmit="return confirm('Delete this education entry?')">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-outline-danger">Delete</button>
+                            </form>
+
+                        </div>
+                    </li>
+                    {% endfor %} {% else %}
+                    <li class="list-group-item text-muted">No education entries.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Right: KYC + preview -->
+    <div class="col-lg-4">
+        <div class="position-sticky" style="top:1rem;">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Identity verification</strong> {% if current_user.kyc_status == 'approved' %}
+                    <span class="badge bg-success">Approved</span> {% elif current_user.kyc_status == 'submitted' %}
+                    <span class="badge bg-warning text-dark">In review</span> {% elif current_user.kyc_status == 'rejected' %}
+                    <span class="badge bg-danger">Rejected</span> {% else %}
+                    <span class="badge bg-light text-dark">Unverified</span> {% endif %}
+                </div>
+                <div class="card-body small">
+                    {% if kyc %}
+                    <div class="mb-2">Last submitted: {{ kyc.submitted_at }}</div>
+                    {% if kyc.review_note %}
+                    <div class="text-muted">Note: {{ kyc.review_note }}</div>{% endif %} {% endif %}
+                    <div class="d-grid mt-2">
+                        <a class="btn btn-outline-primary btn-sm" href="{{ url_for('freelancer.kyc') }}">{% if current_user.kyc_status in ['submitted','approved'] %}View submission{% else %}Verify identity{% endif %}</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><strong>Public preview</strong></div>
+                <div class="card-body">
+                    <div class="fw-semibold">{{ current_user.name or 'Your Name' }}</div>
+                    <div class="text-muted small">{{ current_user.headline or 'Your headline' }}</div>
+                    <hr>
+                    <div class="small">
+                        <div class="text-muted">Skills</div>
+                        {% set skills = (current_user.skills or '') %} {% set items = skills.split(',') if skills else [] %}
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            {% for s in items[:12] %} {% set tag = s.strip() %} {% if tag %}<span class="badge bg-body-tertiary text-dark border">{{ tag }}</span>{% endif %} {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- New Experience Modal -->
+<div class="modal fade" id="expNew" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content needs-validation" method="POST" action="{{ url_for('freelancer.exp_create') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header">
+                <h5 class="modal-title">Add experience</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label">Title</label>
+                    <input class="form-control" name="title" required placeholder="e.g., Senior Presentation Designer">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Company</label>
+                    <input class="form-control" name="company" placeholder="e.g., Acme Co.">
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-6"><label class="form-label">Start date</label><input class="form-control" type="date" name="start_date"></div>
+                    <div class="col-md-6"><label class="form-label">End date</label><input class="form-control" type="date" name="end_date"></div>
+                </div>
+                <div class="mb-2"><label class="form-label">Summary</label><textarea class="form-control" name="summary" rows="3" placeholder="Key achievements, outcomes, metrics…"></textarea></div>
+                <div class="mb-2"><label class="form-label">Skills (comma‑separated)</label><input class="form-control" name="skills" placeholder="pitch decks, research, SQL"></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary">Add</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- New Education Modal -->
+<div class="modal fade" id="eduNew" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content needs-validation" method="POST" action="{{ url_for('freelancer.edu_create') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header">
+                <h5 class="modal-title">Add education</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-2"><label class="form-label">School</label><input class="form-control" name="school" required></div>
+                <div class="mb-2"><label class="form-label">Degree</label><input class="form-control" name="degree"></div>
+                <div class="mb-2"><label class="form-label">Field</label><input class="form-control" name="field"></div>
+                <div class="row g-2">
+                    <div class="col-md-6"><label class="form-label">Start year</label><input class="form-control" type="number" name="start_year" min="1900" max="2100"></div>
+                    <div class="col-md-6"><label class="form-label">End year</label><input class="form-control" type="number" name="end_year" min="1900" max="2100"></div>
+                </div>
+                <div class="mb-2"><label class="form-label">Notes</label><textarea class="form-control" name="notes" rows="3"></textarea></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary">Add</button></div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Bootstrap validation
+    (function() {
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', evt => {
+                if (!form.checkValidity()) {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    })();
+</script>
+
+{% endblock %}

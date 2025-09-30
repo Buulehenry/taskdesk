@@ -1,0 +1,43 @@
+{% extends "base.html" %} {% set title = "Applications — " ~ job.title %} {% block content %}
+<h3 class="mb-3">{{ job.title }} — Applications</h3>
+<div class="card">
+    <div class="card-body p-0">
+        {% if apps %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>When</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Cover</th>
+                        <th>Resume</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in apps %}
+                    <tr>
+                        <td class="text-muted">{{ a.created_at }}</td>
+                        <td>{{ a.name }}</td>
+                        <td>{{ a.email }}</td>
+                        <td>{{ a.phone or '—' }}</td>
+                        <td style="max-width:420px; white-space:pre-wrap" class="small">{{ a.cover_letter or '—' }}</td>
+                        <td>
+                            {% if a.resume_path %}
+                            <a href="{{ url_for('admin.careers_resume', aid=a.id) }}">
+                                {{ a.resume_filename or 'Download resume' }}
+                              </a> {% else %}—{% endif %}
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">No applications yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

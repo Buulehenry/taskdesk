@@ -1,0 +1,464 @@
+{% extends 'base.html' %} {% block content %} {# Admin → Users List Context expected: users: List[User] (paginated page) page, pages: ints counts: dict with keys per role/status for KPI chips (optional) users_total: optional total count #} {% macro status_chips(u)
+-%} {% if u.deleted_at %}
+<span class="badge bg-dark">deleted</span> {% endif %} {% if u.status == 'suspended' %}
+<span class="badge bg-warning text-dark">suspended</span> {% endif %} {% if u.is_email_verified %}
+<span class="badge bg-success-subtle text-success border">email verified</span> {% else %}
+<span class="badge bg-light text-dark">email unverified</span> {% endif %} {% if u.mfa_enabled %}
+<span class="badge bg-info text-dark">MFA</span> {% endif %} {% if u.role == 'freelancer' %}
+<span class="badge bg-secondary-subtle text-secondary border">{{ u.vetted_status or 'pending' }}</span> {% if u.rating %}<span class="badge bg-primary-subtle text-primary border">★ {{ '%.1f'|format(u.rating) }}</span>{% endif %} {% endif %} {%- endmacro
+%}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <h3 class="mb-2 mb-md-0">Users</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.inbox') }}">Admin Inbox</a>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newUserModal">Add user</button>
+    </div>
+</div>
+
+{# KPI cards #} {% set totals = { 'all': users_total if users_total is defined else (counts['all'] if counts and counts.get('all') else users|length), 'client': counts['client'] if counts and counts.get('client') else (users|selectattr('role','equalto','client')|list|length),
+'freelancer': counts['freelancer'] if counts and counts.get('freelancer') else (users|selectattr('role','equalto','freelancer')|list|length), 'admin': counts['admin'] if counts and counts.get('admin') else (users|selectattr('role','equalto','admin')|list|length),
+'suspended': counts['suspended'] if counts and counts.get('suspended') else (users|selectattr('status','equalto','suspended')|list|length), 'deleted': counts['deleted'] if counts and counts.get('deleted') else (users|selectattr('deleted_at')|list|length)
+} %}
+
+<div class="row g-3 mb-4">
+    {% for label, val in [('All', totals['all']), ('Clients', totals['client']), ('Freelancers', totals['freelancer']), ('Admins', totals['admin']), ('Suspended', totals['suspended']), ('Deleted', totals['deleted'])] %}
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">{{ label }}</div>
+                <div class="fs-4 fw-bold">{{ val }}</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form class="row g-2 align-items-end" method="GET" action="{{ url_for('admin.users_list') }}">
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <span class="input-group-text">🔎</span>
+                    <input name="q" value="{{ request.args.get('q','') }}" type="text" class="form-control" placeholder="name, email, phone…">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Role</label>
+                <select class="form-select" name="role">
+          <option value="">All</option>
+          {% for r in ['client','freelancer','admin'] %}
+            <option value="{{ r }}" {% if request.args.get('role') == r %}selected{% endif %}>{{ r|title }}</option>
+          {% endfor %}
+        </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select class="form-select" name="status">
+          <option value="">Any</option>
+          <option value="active" {% if request.args.get('status')=='active' %}selected{% endif %}>Active</option>
+          <option value="suspended" {% if request.args.get('status')=='suspended' %}selected{% endif %}>Suspended</option>
+          <option value="deleted" {% if request.args.get('status')=='deleted' %}selected{% endif %}>Deleted</option>
+          <option value="unverified" {% if request.args.get('status')=='unverified' %}selected{% endif %}>Email unverified</option>
+        </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Vetting</label>
+                <select class="form-select" name="vetted">
+          <option value="">Any</option>
+          {% for v in ['pending','approved','rejected'] %}
+            <option value="{{ v }}" {% if request.args.get('vetted') == v %}selected{% endif %}>{{ v|title }}</option>
+          {% endfor %}
+        </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Sort</label>
+                <select class="form-select" name="sort">
+          <option value="-created" {% if request.args.get('sort','-created')=='-created' %}selected{% endif %}>Newest</option>
+          <option value="created" {% if request.args.get('sort')=='created' %}selected{% endif %}>Oldest</option>
+          <option value="-last_login" {% if request.args.get('sort')=='-last_login' %}selected{% endif %}>Recent login</option>
+          <option value="last_login" {% if request.args.get('sort')=='last_login' %}selected{% endif %}>Old login</option>
+          <option value="name" {% if request.args.get('sort')=='name' %}selected{% endif %}>Name A→Z</option>
+        </select>
+            </div>
+            <div class="col-md-12 d-flex gap-2 mt-2">
+                <button class="btn btn-primary">Apply</button>
+                <a class="btn btn-outline-secondary" href="{{ url_for('admin.users_list') }}">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        {% if users and users|length %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="usersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:36px"><input class="form-check-input" type="checkbox" id="selectAll"></th>
+                        <th>ID</th>
+                        <th style="min-width:240px;">User</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th class="text-nowrap">Created</th>
+                        <th class="text-nowrap">Last login</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td><input class="form-check-input row-check" type="checkbox" value="{{ u.id }}"></td>
+                        <td class="text-muted">#{{ u.id }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ u.name or '—' }}</div>
+                            <div class="small text-muted">{{ u.email }}{% if u.phone %} • {{ u.phone }}{% endif %}</div>
+                            <div class="mt-1 small d-flex flex-wrap gap-1">{{ status_chips(u) }}</div>
+                        </td>
+                        <td>
+                            <span class="badge {% if u.role=='admin' %}bg-danger-subtle text-danger border{% elif u.role=='freelancer' %}bg-primary-subtle text-primary border{% else %}bg-light text-dark{% endif %}">{{ u.role }}</span>
+                        </td>
+                        <td>
+                            {% if u.deleted_at %}
+                            <span class="badge bg-dark">deleted</span> {% elif u.status == 'suspended' %}
+                            <span class="badge bg-warning text-dark">suspended</span> {% elif u.status == 'active' %}
+                            <span class="badge bg-success">active</span> {% else %}
+                            <span class="badge bg-light text-dark">{{ u.status or 'inactive' }}</span> {% endif %}
+                        </td>
+                        <td>{{ u.created_at or '—' }}</td>
+                        <td>{{ u.last_login_at or '—' }}</td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.user_detail', user_id=u.id) }}">Open</a>
+
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                  <span class="visually-hidden">Actions</span>
+                </button>
+
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    {% if not u.deleted_at %} {% if u.status == 'suspended' %}
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#unsuspendModal" data-user-id="{{ u.id }}" data-user-name="{{ u.name or u.email }}">
+                          Unsuspend…
+                        </a>
+                                    </li>
+                                    {% else %}
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#suspendModal" data-user-id="{{ u.id }}" data-user-name="{{ u.name or u.email }}">
+                          Suspend…
+                        </a>
+                                    </li>
+                                    {% endif %}
+
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#roleModal" data-user-id="{{ u.id }}" data-user-name="{{ u.name or u.email }}" data-role="{{ u.role }}">
+                        Change role…
+                      </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#resetPwModal" data-user-id="{{ u.id }}" data-user-name="{{ u.name or u.email }}">
+                        Send reset password…
+                      </a>
+                                    </li>
+
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteModal" data-user-id="{{ u.id }}" data-user-name="{{ u.name or u.email }}">
+                        Delete (soft)…
+                      </a>
+                                    </li>
+                                    {% else %}
+                                    <li><span class="dropdown-item disabled">Deleted</span></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bulk actions bar -->
+        <div class="border-top p-3 d-flex flex-wrap gap-2 align-items-center">
+            <div class="small text-muted me-auto"><span id="selCount">0</span> selected</div>
+
+            <form method="POST" action="{{ url_for('admin.users_bulk_suspend') }}" class="d-inline bulk-form" data-requires-selection="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="ids" id="bulkIds" value="">
+                <button class="btn btn-sm btn-outline-warning" type="submit">Suspend</button>
+            </form>
+
+            <form method="POST" action="{{ url_for('admin.users_bulk_unsuspend') }}" class="d-inline bulk-form" data-requires-selection="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="ids" id="bulkIds2" value="">
+                <button class="btn btn-sm btn-success" type="submit">Unsuspend</button>
+            </form>
+
+            <form method="POST" action="{{ url_for('admin.users_bulk_role') }}" class="d-flex align-items-center gap-2 bulk-form" data-requires-selection="true">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="ids" id="bulkIds3" value="">
+                <select class="form-select form-select-sm" name="role" style="min-width:160px">
+          <option value="client">Client</option>
+          <option value="freelancer">Freelancer</option>
+          <option value="admin">Admin</option>
+        </select>
+                <button class="btn btn-sm btn-outline-primary" type="submit">Set role</button>
+            </form>
+        </div>
+
+        {% else %}
+        <div class="p-4 text-center text-muted">No matching users.</div>
+        {% endif %}
+    </div>
+
+    {# Pagination #} {% if pages and pages > 1 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="small text-muted">Page {{ page }} of {{ pages }}</div>
+        <nav>
+            <ul class="pagination mb-0">
+                {% set prev = page-1 %}{% set next = page+1 %}
+                <li class="page-item {% if page<=1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.users_list', page=1, q=request.args.get('q'), role=request.args.get('role'), status=request.args.get('status'), vetted=request.args.get('vetted'), sort=request.args.get('sort')) }}">« First</a>
+                </li>
+                <li class="page-item {% if page<=1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.users_list', page=prev, q=request.args.get('q'), role=request.args.get('role'), status=request.args.get('status'), vetted=request.args.get('vetted'), sort=request.args.get('sort')) }}">‹ Prev</a>
+                </li>
+                <li class="page-item {% if page>=pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.users_list', page=next, q=request.args.get('q'), role=request.args.get('role'), status=request.args.get('status'), vetted=request.args.get('vetted'), sort=request.args.get('sort')) }}">Next ›</a>
+                </li>
+                <li class="page-item {% if page>=pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.users_list', page=pages, q=request.args.get('q'), role=request.args.get('role'), status=request.args.get('status'), vetted=request.args.get('vetted'), sort=request.args.get('sort')) }}">Last »</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+{# Modals #}
+<div class="modal fade" id="suspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_suspend') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="suspend_user_id">
+            <div class="modal-header">
+                <h5 class="modal-title">Suspend user</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">Suspending <span id="suspend_user_label" class="fw-semibold"></span>. They won't be able to sign in or take actions.</div>
+                <label class="form-label">Reason (visible to admins)</label>
+                <textarea name="reason" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="modal-footer"><button class="btn btn-warning">Suspend</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="unsuspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_unsuspend') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="unsuspend_user_id">
+            <div class="modal-header">
+                <h5 class="modal-title">Unsuspend user</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">Unsuspending <span id="unsuspend_user_label" class="fw-semibold"></span>.</div>
+            <div class="modal-footer"><button class="btn btn-success">Unsuspend</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="roleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        {# IMPORTANT: route requires a path param user_id, give a dummy 0; actual id is in hidden input #}
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_change_role', user_id=0) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="role_user_id">
+            <div class="modal-header">
+                <h5 class="modal-title">Change role</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">Changing role for <span id="role_user_label" class="fw-semibold"></span>.</div>
+                <select class="form-select" name="role" id="roleCurrent" required>
+          <option value="client">Client</option>
+          <option value="freelancer">Freelancer</option>
+          <option value="admin">Admin</option>
+        </select>
+                <div class="form-text">Only senior admins should grant admin access.</div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary">Update role</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="resetPwModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_send_reset') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="reset_user_id">
+            <div class="modal-header">
+                <h5 class="modal-title">Send password reset</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">Send reset email to <span id="reset_user_label" class="fw-semibold"></span>?</div>
+            <div class="modal-footer"><button class="btn btn-outline-primary">Send link</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_delete') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="delete_user_id">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete user (soft)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">Soft-delete <span id="delete_user_label" class="fw-semibold"></span>? They will be logged out and disabled, but historical records remain.</div>
+                <div class="alert alert-warning small">This is reversible by an admin (reactivate). For full erasure, run a compliance job.</div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-danger">Delete</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="newUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content needs-validation" method="POST" action="{{ url_for('admin.user_new') }}" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-2">
+                    <label class="form-label">Name</label>
+                    <input type="text" name="name" class="form-control">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" name="email" class="form-control" required>
+                    <div class="invalid-feedback">Email is required.</div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label">Phone</label>
+                    <input type="text" name="phone" class="form-control">
+                </div>
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label">Role</label>
+                        <select name="role" class="form-select">
+              <option value="client">Client</option>
+              <option value="freelancer">Freelancer</option>
+              <option value="admin">Admin</option>
+            </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Password (optional)</label>
+                        <input type="password" name="password" class="form-control">
+                        <div class="form-text">Leave blank to send a reset link later.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-primary">Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Bulk select + hidden inputs
+    (function() {
+        const selectAll = document.getElementById('selectAll');
+        const checks = Array.from(document.querySelectorAll('.row-check'));
+        const selCount = document.getElementById('selCount');
+        const idsInputs = [document.getElementById('bulkIds'), document.getElementById('bulkIds2'), document.getElementById('bulkIds3')];
+
+        function update() {
+            const ids = checks.filter(c => c.checked).map(c => c.value);
+            if (selCount) selCount.textContent = ids.length;
+            idsInputs.forEach(i => {
+                if (i) i.value = ids.join(',');
+            });
+        }
+        if (selectAll) {
+            selectAll.addEventListener('change', () => {
+                checks.forEach(c => c.checked = selectAll.checked);
+                update();
+            });
+        }
+        checks.forEach(c => c.addEventListener('change', update));
+        update();
+
+        // Require selection on forms that need it
+        document.querySelectorAll('form.bulk-form[data-requires-selection="true"]').forEach(form => {
+            form.addEventListener('submit', (e) => {
+                const ids = (form.querySelector('input[name="ids"]') ? .value || '').split(',').filter(Boolean);
+                if (!ids.length) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    alert('Select at least one user.');
+                }
+            });
+        });
+    })();
+
+    // Fill modals with selected user id/name/role
+    document.addEventListener('DOMContentLoaded', () => {
+        function wire(modalId, inputId, labelId) {
+            const m = document.getElementById(modalId);
+            if (!m) return;
+            m.addEventListener('show.bs.modal', ev => {
+                const btn = ev.relatedTarget;
+                const uid = btn ? .getAttribute('data-user-id') || '';
+                const name = btn ? .getAttribute('data-user-name') || '';
+                const role = btn ? .getAttribute('data-role') || '';
+                const inp = m.querySelector('#' + inputId);
+                const lab = m.querySelector('#' + labelId);
+                if (inp) inp.value = uid;
+                if (lab) lab.textContent = name ? `User: ${name} (ID ${uid})` : `User ID: ${uid}`;
+                const roleSel = m.querySelector('select[name="role"]');
+                if (roleSel && role) roleSel.value = role;
+            });
+        }
+        wire('suspendModal', 'suspend_user_id', 'suspend_user_label');
+        wire('unsuspendModal', 'unsuspend_user_id', 'unsuspend_user_label');
+        wire('roleModal', 'role_user_id', 'role_user_label');
+        wire('resetPwModal', 'reset_user_id', 'reset_user_label');
+        wire('deleteModal', 'delete_user_id', 'delete_user_label');
+    });
+
+    // Simple form validation for the "Add user" modal
+    (function() {
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', evt => {
+                if (!form.checkValidity()) {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+        const newUserModal = document.getElementById('newUserModal');
+        if (newUserModal) {
+            newUserModal.addEventListener('hidden.bs.modal', () => {
+                const f = newUserModal.querySelector('form');
+                if (f) {
+                    f.reset();
+                    f.classList.remove('was-validated');
+                }
+            });
+        }
+    })();
+</script>
+
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "email/_base_email.html" %} {% block subject %} Invoice issued — Task #{{ task.id }}{% if task.title %}: {{ task.title }}{% endif %} {% endblock %} {% block body %}
+<p>Hi {{ task.client.name if task.client and task.client.name else 'there' }},</p>
+<p>We’ve issued an invoice for <strong>Task #{{ task.id }}</strong>{% if task.title %} — <em>{{ task.title }}</em>{% endif %}.</p>
+
+<p><strong>Amount:</strong> {{ invoice.currency }} {{ '%.2f'|format(invoice.amount) }}<br>
+    <strong>Status:</strong> {{ invoice.status }}</p>
+
+<p style="margin:18px 0 6px;">
+    {% if pay_url %}<a class="btn" href="{{ pay_url }}">Pay Now</a>{% endif %} {% if task_link %}<a class="btn" href="{{ task_link }}" style="margin-left:8px;">View Task</a>{% endif %}
+</p>
+
+<p class="muted">A PDF copy of your invoice is attached.</p>
+{% endblock %}

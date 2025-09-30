@@ -1,0 +1,12 @@
+{% extends "email/_base_email.html" %} {% block subject %} Payment received — Task #{{ task.id }}{% if task.title %}: {{ task.title }}{% endif %} {% endblock %} {% block body %}
+<p>Hi {{ task.client.name if task.client and task.client.name else 'there' }},</p>
+<p>We’ve received your payment for <strong>Invoice #{{ invoice.id }}</strong> on Task #{{ task.id }}.</p>
+
+<p><strong>Amount:</strong> {{ invoice.currency }} {{ '%.2f'|format(payment.amount) }}<br>
+    <strong>Date:</strong> {{ payment.paid_at }}</p>
+
+<p class="muted">Your PDF receipt is attached for your records.</p>
+
+{% if task_link %}
+<p style="margin-top:16px;"><a class="btn" href="{{ task_link }}">View Task</a></p>
+{% endif %} {% endblock %}

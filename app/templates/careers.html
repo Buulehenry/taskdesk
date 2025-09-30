@@ -1,0 +1,32 @@
+{% extends "base.html" %} {% set title = "Careers — TaskDesk" %} {% block content %}
+<section class="py-4">
+    <div class="d-flex justify-content-between align-items-end mb-3">
+        <div>
+            <h1 class="mb-1">Careers</h1>
+            <p class="text-muted mb-0">Join a small team doing big things.</p>
+        </div>
+        <form class="d-flex gap-2" method="get">
+            <input class="form-control" name="q" value="{{ request.args.get('q','') }}" placeholder="Search roles, departments…">
+            <button class="btn btn-outline-primary">Search</button>
+        </form>
+    </div>
+
+    {% if jobs %}
+    <div class="list-group">
+        {% for j in jobs %}
+        <a class="list-group-item list-group-item-action" href="{{ url_for('main.career_detail', job_id=j.id) }}">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{ j.title }}</h5>
+                <small class="text-muted">{{ j.location or '—' }}</small>
+            </div>
+            <div class="small text-muted">
+                {{ j.department or 'General' }} • {{ j.employment_type or '—' }}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-muted">No open roles right now. Check back soon.</div>
+    {% endif %}
+</section>
+{% endblock %}

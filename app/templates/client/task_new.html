@@ -1,0 +1,186 @@
+{% extends 'base.html' %} {% block content %} {# Fallback categories if the view didn't provide them #} {% set categories = categories or [ 'Pitch Deck', 'Report / Whitepaper', 'Market Research', 'Data Analysis', 'BI Dashboards', 'Copywriting', 'Editing
+& Proofreading', 'Blog & Articles', 'Social Media Content', 'SEO', 'SEM / Paid Ads', 'Email Marketing', 'Branding & Identity', 'Logo Design', 'UI Design', 'UX Research', 'Web Development', 'Mobile App Development', 'API Integration', 'DevOps / CI/CD',
+'Cloud & Hosting', 'Database & ETL', 'Automation / Scripting', 'AI / ML & Data Science', 'Prompt Engineering', 'Cybersecurity', 'QA / Testing', 'Documentation', 'Product Management', 'Project Management', 'Sales Enablement', 'Customer Support', 'Customer
+Success', 'Training & Tutorials', 'HR & Recruitment', 'Legal & Compliance', 'Finance & Accounting', 'Procurement', 'Operations & Logistics', 'Supply Chain Planning', 'Event Planning', 'Public Relations', 'Partnerships & BizDev', 'Grants & Fundraising',
+'Video Production', 'Audio & Podcast', '3D / Motion Graphics', 'Photography & Imaging', 'Localization & Translation', 'Accessibility & Inclusion' ] %}
+
+
+<div class="row g-4">
+    <!-- Main: Form -->
+    <div class="col-lg-8">
+        <h3 class="mb-3">Submit a New Task</h3>
+
+        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+            <div class="row g-3">
+                <div class="col-md-7">
+                    <label class="form-label">Title <span class="text-danger">*</span></label>
+                    <input name="title" class="form-control" value="{{ request.form.get('title','') }}" placeholder="e.g., Investor pitch deck for Q4" required>
+                    <div class="invalid-feedback">Please add a short, descriptive title.</div>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label">Category <span class="text-danger">*</span></label>
+
+                    <select name="category" id="categorySelect" class="form-select" required>
+            <option value="" disabled {{ '' if request.form.get('category') else 'selected' }}>Select a category…</option>
+            {% for c in categories %}
+              <option value="{{ c }}"
+                {{ 'selected' if request.form.get('category')==c else '' }}>{{ c }}</option>
+            {% endfor %}
+            <option value="_other" {{ 'selected' if request.form.get('category')=='_other' else '' }}>Other…</option>
+          </select>
+                    <div class="invalid-feedback">Please choose a category.</div>
+
+                    <input type="text" name="category_other" id="categoryOther" class="form-control mt-2" placeholder="Type your category" value="{{ request.form.get('category_other','') }}" {% if request.form.get( 'category')!='_other' %}style="display:none" {% endif %}>
+                    <div class="form-text">Pick a category or choose “Other…” and specify.</div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-md-6">
+                    <label class="form-label">Deadline</label>
+                    <input name="deadline" type="datetime-local" class="form-control" value="{{ request.form.get('deadline','') }}">
+                    <div class="form-text">We’ll confirm feasibility and SLA after review.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Budget UGX (optional)</label>
+                    <input name="budget" type="number" step="0.01" class="form-control" value="{{ request.form.get('budget','') }}" placeholder="e.g., 350">
+                    <div class="form-text">If unsure, leave blank — we’ll quote you.</div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="7" placeholder="Goal, audience, key points, references, constraints…">{{ request.form.get('description','') }}</textarea>
+                <div class="form-text">Tip: Paste any text you already have; we’ll tidy it up.</div>
+            </div>
+
+            <div class="mt-3">
+                <label class="form-label">Attachments (optional)</label>
+                <input type="file" name="attachments" class="form-control" multiple>
+                <div class="form-text">Allowed: pdf, docx, xlsx, pptx, images, zip, csv, txt (max 50 MB per request).</div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <button class="btn btn-primary">Submit</button>
+                <a href="{{ url_for('client.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Sidebar: Guidance -->
+    <div class="col-lg-4">
+        <div class="position-sticky" style="top: 1rem;">
+            <div class="card mb-3">
+                <div class="card-header"><strong>How to write a great brief</strong></div>
+                <div class="card-body small">
+                    <ol class="mb-0 ps-3">
+                        <li><span class="fw-semibold">Goal:</span> What outcome do you want? (e.g., “raise UGX 2.5M”, “close enterprise lead”).</li>
+                        <li><span class="fw-semibold">Audience:</span> Who will see/use this? Role, seniority, industry.</li>
+                        <li><span class="fw-semibold">Key points:</span> Must-include facts, messages, or data.</li>
+                        <li><span class="fw-semibold">Style & tone:</span> Formal, concise, persuasive, visual, etc.</li>
+                        <li><span class="fw-semibold">Constraints:</span> Brand kit, word count, slide count, file format.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><strong>Examples</strong></div>
+                <div class="card-body small">
+                    <div class="mb-2">
+                        <div class="fw-semibold">Pitch Deck</div>
+                        <div>12–15 slides, for investors; include problem, solution, market, traction, ask.</div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="fw-semibold">Market Research Brief</div>
+                        <div>Compare 3 competitors in Kenya/Uganda; pricing, features, positioning. 5-page summary by Friday 5pm.</div>
+                    </div>
+                    <div>
+                        <div class="fw-semibold">Website Copy</div>
+                        <div>Homepage + About + Services (B2B). Tone: professional, concise, benefit-led.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><strong>Turnaround & Pricing</strong></div>
+                <div class="card-body small">
+                    <ul class="mb-2">
+                        <li>Standard: 2–5 business days</li>
+                        <li>Rush: <span class="fw-semibold">+20–40%</span> depending on scope/notice</li>
+                        <li>Includes 1 review call + light revisions</li>
+                    </ul>
+                    <div class="text-muted">You can choose “Pay now” or “Pay on delivery” after we send a quote.</div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><strong>What can I upload?</strong></div>
+                <div class="card-body small">
+                    <div class="mb-2">Brand kit, old decks, spreadsheets, photos, drafts, competitor links (put URLs in the description).</div>
+                    <div class="text-muted">We support: pdf, docx, xlsx, pptx, images, zip, csv, txt.</div>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><strong>Confidentiality</strong></div>
+                <div class="card-body small">
+                    <div>All work is covered by our NDA and internal review only. Vetted freelancers sign NDAs before access.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><strong>What happens next?</strong></div>
+                <div class="card-body small">
+                    <ol class="mb-2 ps-3">
+                        <li>We review your brief and send a quote.</li>
+                        <li>You choose Pay now / Pay on delivery.</li>
+                        <li>We execute and schedule a short review on Meet/Teams.</li>
+                        <li>Final files are delivered (downloads unlock after payment).</li>
+                    </ol>
+                    <div class="text-muted">Need help? Email support@taskdesk.ug or reply to the quote email.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Bootstrap validation
+    (function() {
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', evt => {
+                if (!form.checkValidity()) {
+                    evt.preventDefault();
+                    evt.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        });
+    })();
+
+    // Toggle "Other" category input
+    (function() {
+        const sel = document.getElementById('categorySelect');
+        const other = document.getElementById('categoryOther');
+        if (!sel || !other) return;
+
+        function syncOther() {
+            const isOther = sel.value === '_other';
+            other.style.display = isOther ? '' : 'none';
+            // make it required only when visible
+            if (isOther) {
+                other.setAttribute('required', 'required');
+            } else {
+                other.removeAttribute('required');
+                other.value = other.value;
+            }
+        }
+        sel.addEventListener('change', syncOther);
+        syncOther();
+    })();
+</script>
+{% endblock %}

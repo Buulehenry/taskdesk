@@ -1,0 +1,199 @@
+{% extends 'base.html' %} {% block content %}
+
+<!-- HERO -->
+<section class="py-5 py-lg-6">
+    <div class="row align-items-center g-5">
+        <div class="col-lg-6 reveal" data-reveal="fade-up">
+            <h1 class="display-5 fw-bold mb-3">
+                Deadlines handled. <span class="text-primary">TaskDesk</span> gets it done.
+            </h1>
+            <p class="lead text-muted">
+                Busy executives and teams submit a brief; we deliver the work or match a vetted expert - On Time, Every Time.
+            </p>
+            <div class="d-flex gap-2 mt-3">
+                <a class="btn btn-primary btn-lg" href="{{ url_for('client.task_new') }}">Start a task</a> {% if not current_user.is_authenticated %}
+                <a class="btn btn-outline-secondary btn-lg" href="{{ url_for('auth.register') }}">Create account</a> {% endif %}
+            </div>
+            <div class="small text-muted mt-3">
+                No subscription required • NDA by default • Pay now or on delivery
+            </div>
+        </div>
+
+        <div class="col-lg-6 reveal" data-reveal="fade-in">
+            <div class="hero-media rounded-4 overflow-hidden shadow-sm">
+                <img src="{{ url_for('static', filename='img/hero.png') }}" class="w-100 h-100 object-fit-cover" alt="Professional team delivering work on time" loading="eager" width="1200" height="675">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- VALUE PROPS -->
+<section class="py-5">
+    <div class="text-center mb-4 reveal" data-reveal="fade-up">
+        <h2 class="fw-bold">Why business leaders choose TaskDesk</h2>
+        <p class="text-muted">From quick wins to complex deliverables — we execute with speed and clarity.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 lift reveal" data-reveal="rise">
+                <div class="card-thumb">
+                    <img src="{{ url_for('static', filename='img/feature-1.png') }}" class="card-img-top" alt="Speed" loading="lazy" width="800" height="450">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Fast turnarounds</h5>
+                    <p class="card-text text-muted">
+                        Standard 2–5 business days, rush options available. We keep you updated at every step.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 lift reveal" data-reveal="rise" data-delay="80">
+                <div class="card-thumb">
+                    <img src="{{ url_for('static', filename='img/feature-2.png') }}" class="card-img-top" alt="Quality" loading="lazy" width="800" height="450">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Vetted expertise</h5>
+                    <p class="card-text text-muted">
+                        Specialists across presentations, research, copy, web, data — vetted and NDA-bound.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 lift reveal" data-reveal="rise" data-delay="160">
+                <div class="card-thumb">
+                    <img src="{{ url_for('static', filename='img/feature-3.png') }}" class="card-img-top" alt="Simple payments" loading="lazy" width="800" height="450">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Straightforward pricing</h5>
+                    <p class="card-text text-muted">
+                        Choose pay-now or pay-on-delivery. Clear quotes with scope, timeline, and inclusions.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="py-5 bg-body-tertiary">
+    <div class="text-center mb-4 reveal" data-reveal="fade-up">
+        <h2 class="fw-bold">How it works</h2>
+        <p class="text-muted">A simple flow from brief to delivery.</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card h-100 lift reveal" data-reveal="rise">
+                <div class="card-thumb">
+                    <img src="{{ url_for('static', filename='img/how-1.png') }}" class="w-100 h-100 object-fit-cover" alt="Submit brief" loading="lazy" width="800" height="450">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">1) Submit your brief</h5>
+                    <p class="card-text text-muted">Tell us goals, audience, deadline, and share any files. We confirm feasibility fast.</p>
+                    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('client.task_new') }}">Create a task</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card h-100 lift reveal" data-reveal="rise" data-delay="80">
+                <div class="card-thumb">
+                    <img src="{{ url_for('static', filename='img/how-2.png') }}" class="w-100 h-100 object-fit-cover" alt="We execute" loading="lazy" width="800" height="450">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">2) We execute</h5>
+                    <p class="card-text text-muted">
+                        Our in-house team or a vetted freelancer starts work. You’ll get a quote and status updates.
+                    </p>
+                    <span class="badge bg-light text-dark">Includes a review call</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card h-100 lift reveal" data-reveal="rise" data-delay="160">
+                <div class="card-thumb">
+                    <img src="{{ url_for('static', filename='img/how-3.png') }}" class="w-100 h-100 object-fit-cover" alt="Deliverables" loading="lazy" width="800" height="450">
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">3) Review & deliver</h5>
+                    <p class="card-text text-muted">
+                        We present the draft on Meet/Teams, apply fixes, then deliver final files. Payments handled securely.
+                    </p>
+                    <span class="badge bg-success-subtle text-success border">On-time guarantee</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- INDUSTRIES / USE CASES -->
+<section class="py-5">
+    <div class="text-center mb-4 reveal" data-reveal="fade-up">
+        <h2 class="fw-bold">Built for busy professionals</h2>
+        <p class="text-muted">Popular requests from business owners and corporate teams.</p>
+    </div>
+
+    <div class="row g-3">
+        {% set chips = ['Investor pitch decks','Board reports','Market research','Sales one-pagers','Company profiles','RFP responses','Website copy','Product brochures','Data cleaning & analysis'] %} {% for c in chips %}
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="border rounded-pill px-3 py-2 text-center small bg-body-tertiary reveal" data-reveal="fade-up" data-delay="{{ loop.index0 * 40 }}">
+                {{ c }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<!-- CTA STRIP -->
+<section class="py-5 text-center reveal" data-reveal="fade-up">
+    <h2 class="fw-bold mb-2">Ready to free up your time?</h2>
+    <p class="text-muted">Submit your brief in minutes and we’ll take it from there.</p>
+    <a class="btn btn-primary btn-lg" href="{{ url_for('client.task_new') }}">Start a task</a> {% if not current_user.is_authenticated %}
+    <a class="btn btn-outline-secondary btn-lg ms-2" href="{{ url_for('auth.register') }}">Create account</a> {% endif %}
+</section>
+
+<!-- FAQ -->
+<section class="py-5 border-top">
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <h3 class="fw-bold">Frequently asked questions</h3>
+            <p class="text-muted">If you have other questions, reach out — we’re happy to help.</p>
+        </div>
+        <div class="col-lg-7">
+            <div class="accordion" id="faq">
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="q1"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#a1">How fast can you deliver?</button></h2>
+                    <div id="a1" class="accordion-collapse collapse show" data-bs-parent="#faq">
+                        <div class="accordion-body">Most tasks complete within 2–5 business days. Urgent? Choose a rush option and we’ll prioritize.</div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="q2"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#a2">How do payments work?</button></h2>
+                    <div id="a2" class="accordion-collapse collapse" data-bs-parent="#faq">
+                        <div class="accordion-body">We send a clear quote. You can pay now (often with a discount) or on delivery. Payments are processed securely.</div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="q3"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#a3">Is my data confidential?</button></h2>
+                    <div id="a3" class="accordion-collapse collapse" data-bs-parent="#faq">
+                        <div class="accordion-body">Yes. All work is covered by NDA. Vetted freelancers sign NDAs before accessing your materials.</div>
+                    </div>
+                </div>
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="q4"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#a4">What types of work do you do?</button></h2>
+                    <div id="a4" class="accordion-collapse collapse" data-bs-parent="#faq">
+                        <div class="accordion-body">Presentations, research, copywriting, websites, data analysis, and more. If it’s not listed, ask — we’ll advise.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

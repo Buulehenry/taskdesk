@@ -1,0 +1,134 @@
+{% extends "base.html" %} {% set title = "About — TaskDesk" %} {% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <h1 class="mb-2">About TaskDesk</h1>
+                <p class="lead mb-3">
+                    We help busy executives and teams ship on time. Submit a brief; we scope it, match the right expert, and deliver—on time, every time.
+                </p>
+                <div class="d-flex flex-wrap gap-3 small text-muted">
+                    <span>⚡ Fast quotes</span>
+                    <span>🛡️ Privacy-first</span>
+                    <span>✅ Quality-reviewed</span>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="row text-center g-3">
+                    <div class="col-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="display-6 fw-bold">95%</div>
+                                <div class="text-muted small">on-time delivery</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="display-6 fw-bold">4.8★</div>
+                                <div class="text-muted small">avg. customer rating</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="display-6 fw-bold">24h</div>
+                                <div class="text-muted small">typical turnaround</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <div class="display-6 fw-bold">150+</div>
+                                <div class="text-muted small">vetted experts</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+        <div class="row g-5">
+            <div class="col-lg-6">
+                <h5 class="mb-2">Our mission</h5>
+                <p>Deliver reliable, high-quality help on demand—so our customers can focus on what matters most.</p>
+
+                <h5 class="mt-4 mb-2">What we do</h5>
+                <ul class="mb-0">
+                    <li>Structured task intake and scoped estimates.</li>
+                    <li>Expert matching for specialist work.</li>
+                    <li>Progress updates, review, and on-time delivery.</li>
+                </ul>
+            </div>
+
+            <div class="col-lg-6">
+                <h5 class="mb-3">How it works</h5>
+                <ol class="list-group list-group-numbered">
+                    <li class="list-group-item">
+                        <strong>Submit a task.</strong> Share your brief, files, and deadline.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Receive a quick quote.</strong> We confirm scope, cost, and timeline.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>We execute.</strong> The right expert delivers; you can review in-thread.
+                    </li>
+                    <li class="list-group-item">
+                        <strong>Done.</strong> Approve, pay, and get organized for the next task.
+                    </li>
+                </ol>
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <h5>What we believe</h5>
+                <ul class="mb-0">
+                    <li><strong>Speed with substance.</strong> Fast is only useful if it’s correct.</li>
+                    <li><strong>Clear communication.</strong> No surprises—ever.</li>
+                    <li><strong>Ownership.</strong> Every task has a responsible owner.</li>
+                </ul>
+            </div>
+            <div class="col-lg-4">
+                <h5>Trust & security</h5>
+                <ul class="mb-0">
+                    <li>Private file handling & access controls.</li>
+                    <li>CSRF/session protection; audited attachments.</li>
+                    <li>NDA by default; least-privilege assignments.</li>
+                </ul>
+                <div class="small mt-2">
+                    Learn more in our <a href="{{ url_for('main.privacy') }}">Privacy Policy</a> and
+                    <a href="{{ url_for('main.cookies') }}">Cookies</a>.
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <h5>Why teams choose us</h5>
+                <ul class="mb-0">
+                    <li>Quotes in hours, not days.</li>
+                    <li>Vetted experts and structured QA.</li>
+                    <li>Simple pricing and clear milestones.</li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+        <div class="text-center">
+            <h5 class="mb-3">Ready to move faster?</h5>
+            <div class="d-inline-flex gap-2">
+                <a class="btn btn-primary" href="{{ url_for('client.dashboard') if current_user.is_authenticated else url_for('auth.register') }}">
+          Start a task
+        </a>
+                <a class="btn btn-outline-secondary" href="{{ url_for('main.support') }}">Talk to support</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

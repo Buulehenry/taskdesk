@@ -1,0 +1,22 @@
+{% extends "base.html" %} {% set title = (('Edit: ' ~ job.title) if job else 'New Job') %} {% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+<form method="post" action="{{ job and url_for('admin.careers_edit', jid=job.id) or url_for('admin.careers_new') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="row g-3">
+        <div class="col-md-6"><label class="form-label">Title</label><input class="form-control" name="title" value="{{ job.title if job else '' }}" required></div>
+        <div class="col-md-3"><label class="form-label">Department</label><input class="form-control" name="department" value="{{ job.department if job else '' }}"></div>
+        <div class="col-md-3"><label class="form-label">Type</label><input class="form-control" name="employment_type" value="{{ job.employment_type if job else '' }}"></div>
+        <div class="col-md-6"><label class="form-label">Location</label><input class="form-control" name="location" value="{{ job.location if job else '' }}"></div>
+        <div class="col-md-6">
+            <label class="form-label">Description (supports HTML/Markdown)</label>
+            <textarea class="form-control" name="description_md" rows="10">{{ job.description_md if job else '' }}</textarea>
+        </div>
+        <div class="col-12 form-check mt-2">
+            <input class="form-check-input" type="checkbox" name="is_active" id="active" {{ 'checked' if (job and job.is_active) or not job else '' }}>
+            <label class="form-check-label" for="active">Active (visible on Careers)</label>
+        </div>
+        <div class="col-12"><button class="btn btn-primary">Save</button>
+            <a class="btn btn-outline-secondary" href="{{ url_for('admin.careers_list') }}">Cancel</a></div>
+    </div>
+</form>
+{% endblock %}

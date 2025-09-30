@@ -1,0 +1,112 @@
+{% extends 'base.html' %} {% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">KYC Queue</h4>
+    <a class="btn btn-outline-secondary" href="{{ url_for('admin.inbox') }}">Admin Inbox</a>
+</div>
+
+<form class="row g-2 align-items-end mb-3" method="GET">
+    <div class="col-md-4">
+        <label class="form-label">Search</label>
+        <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="name, email, user ID, ID number">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-select">
+            {% for s in ['submitted','approved','rejected'] %}
+            <option value="{{ s }}" {% if status==s %}selected{% endif %}>{{ s|title }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary">Apply</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.kyc_queue') }}">Reset</a>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between">
+        <div class="small text-muted">Total: {{ total }}</div>
+    </div>
+    <div class="card-body p-0">
+        {% if subs %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Submitted</th>
+                        <th>User</th>
+                        <th>Doc</th>
+                        <th>ID number</th>
+                        <th>Country</th>
+                        <th>Preview</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in subs %}
+                    <tr>
+                        <td class="text-nowrap">{{ s.submitted_at }}</td>
+                        <td>
+                            {# inside the
+                            <td> that shows user info #} {% set u = users_map.get(s.user_id) %}
+                                <div class="fw-semibold">
+                                    {% if u %}
+                                    <a href="{{ url_for('admin.user_detail', user_id=u.id) }}">{{ u.name or '—' }}</a> {% else %} — {% endif %}
+                                </div>
+                                <div class="small text-muted">{{ u.email if u else '—' }}</div>
+
+                            </td>
+                            <td class="text-capitalize">{{ s.doc_type.replace('_',' ') if s.doc_type else '—' }}</td>
+                            <td>{{ s.id_number or '—' }}</td>
+                            <td>{{ s.country or '—' }}</td>
+                            <td style="min-width:220px">
+                                <div class="d-flex gap-2">
+                                    {% for fid in [s.file_id_front, s.file_id_back, s.file_id_selfie] %} {% if fid %}
+                                    <a class="d-block border rounded overflow-hidden ratio ratio-16x9" style="width: 90px" href="{{ url_for('admin.secure_file', file_id=fid) }}" target="_blank">
+                                        <img class="w-100 h-100 object-fit-contain" src="{{ url_for('admin.secure_thumb', file_id=fid) }}" alt="doc">
+                                    </a>
+                                    {% endif %} {% endfor %}
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <form class="d-inline" method="POST" action="{{ url_for('admin.kyc_review', user_id=s.user_id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="submission_id" value="{{ s.id }}">
+                                    <input type="hidden" name="next" value="{{ request.full_path }}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button class="btn btn-sm btn-success">Approve</button>
+                                </form>
+                                <form class="d-inline ms-1" method="POST" action="{{ url_for('admin.kyc_review', user_id=s.user_id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <input type="hidden" name="submission_id" value="{{ s.id }}">
+                                    <input type="hidden" name="next" value="{{ request.full_path }}">
+                                    <input type="hidden" name="action" value="reject">
+                                    <button class="btn btn-sm btn-outline-danger">Reject</button>
+                                </form>
+                            </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">No submissions.</div>
+        {% endif %}
+    </div>
+
+    {% if pages and pages > 1 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="small text-muted">Page {{ page }} of {{ pages }}</div>
+        <nav>
+            <ul class="pagination mb-0">
+                {% set prev = page-1 %}{% set next = page+1 %}
+                <li class="page-item {% if page<=1 %}disabled{% endif %}"><a class="page-link" href="{{ url_for('admin.kyc_queue', page=1, q=q, status=status) }}">« First</a></li>
+                <li class="page-item {% if page<=1 %}disabled{% endif %}"><a class="page-link" href="{{ url_for('admin.kyc_queue', page=prev, q=q, status=status) }}">‹ Prev</a></li>
+                <li class="page-item {% if page>=pages %}disabled{% endif %}"><a class="page-link" href="{{ url_for('admin.kyc_queue', page=next, q=q, status=status) }}">Next ›</a></li>
+                <li class="page-item {% if page>=pages %}disabled{% endif %}"><a class="page-link" href="{{ url_for('admin.kyc_queue', page=pages, q=q, status=status) }}">Last »</a></li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

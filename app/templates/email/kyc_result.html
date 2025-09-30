@@ -1,0 +1,22 @@
+{% extends "email/_base_email.html" %} {% block content %}
+<h2 style="margin:0 0 16px 0;">KYC Review Result</h2>
+<p>Hello {{ user.name }},</p>
+
+{% if submission.status == 'approved' %}
+<p style="color:green;font-weight:bold;">✅ Your KYC submission has been approved.</p>
+<p>You’re now fully verified and can take on assignments without restriction.</p>
+{% elif submission.status == 'rejected' %}
+<p style="color:red;font-weight:bold;">❌ Unfortunately, your KYC submission was rejected.</p>
+{% if submission.review_note %}
+<p><strong>Reason:</strong> {{ submission.review_note }}</p>
+{% endif %}
+<p>You may update and resubmit your documents from your dashboard.</p>
+{% else %}
+<p>Your KYC submission is still under review.</p>
+{% endif %}
+
+<p>
+    <a href="{{ url_for('freelancer.dashboard', _external=True) }}" style="display:inline-block;padding:10px 18px;background:#6c63ff;color:#fff;
+              text-decoration:none;border-radius:4px;">Go to Dashboard</a>
+</p>
+{% endblock %}

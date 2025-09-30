@@ -1,0 +1,55 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container my-4">
+    <div class="d-flex align-items-center mb-3">
+        <h1 class="mb-0">Campaigns</h1>
+        <div class="ms-auto">
+            <a class="btn btn-primary" href="{{ url_for('admin.campaigns_new') }}">New Campaign</a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Subject</th>
+                    <th>Segment</th>
+                    <th>Created</th>
+                    <th>Sent</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in camps.items %}
+                <tr>
+                    <td>{{ c.title }}</td>
+                    <td>{{ c.subject }}</td>
+                    <td>{{ c.segment }}</td>
+                    <td>{{ c.created_at }}</td>
+                    <td>{{ c.sent_at or '—' }}</td>
+                    <td class="text-end">
+                        {% if not c.sent_at %}
+                        <form method="post" action="{{ url_for('admin.campaigns_send', cid=c.id) }}" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button class="btn btn-sm btn-outline-success">Send</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">sent</span> {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if camps.pages>1 %}
+    <nav class="mt-2">
+        <ul class="pagination">
+            <li class="page-item {{ 'disabled' if not camps.has_prev }}"><a class="page-link" href="{{ url_for('admin.campaigns_list', page=camps.prev_num) }}">Prev</a></li>
+            <li class="page-item disabled"><span class="page-link">Page {{ camps.page }} / {{ camps.pages }}</span></li>
+            <li class="page-item {{ 'disabled' if not camps.has_next }}"><a class="page-link" href="{{ url_for('admin.campaigns_list', page=camps.next_num) }}">Next</a></li>
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

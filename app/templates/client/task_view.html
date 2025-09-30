@@ -1,0 +1,246 @@
+{% extends 'base.html' %} {% from 'macros.html' import task_status_progress, progress_bar %} {% block content %}
+
+<div class="d-flex justify-content-between align-items-start mb-2">
+    <div>
+        <h3 class="mb-1">Task #{{ task.id }} — {{ task.title }}</h3>
+        <div class="small text-muted">
+            <span class="me-2">Category: {{ task.category or '—' }}</span>
+            <span class="me-2">Created: {{ task.created_at }}</span>
+            <span class="me-2">Deadline: {{ task.deadline_at or '—' }}</span> {% if task.client_budget %}<span>Budget: {{ '%.2f'|format(task.client_budget) }}</span>{% endif %}
+        </div>
+    </div>
+    <span class="badge bg-info fs-6">{{ task.status }}</span>
+</div>
+<div class="mb-4" style="max-width:520px">{{ task_status_progress(task.status) }}</div>
+
+<div class="row g-4">
+    <!-- Left column -->
+    <div class="col-lg-8">
+
+        <!-- Description -->
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <strong>Description</strong>
+            </div>
+            <div class="card-body">
+                <div class="pre-wrap">{{ task.description or 'No description provided.' }}</div>
+            </div>
+        </div>
+
+        <!-- Files (attachments & deliverables) -->
+        <div class="card mb-4">
+            <div class="card-header d-flex align-items-center justify-content-between">
+                <strong>Files</strong>
+                <span class="text-muted small">Uploads from you or the assignee will appear here.</span>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% set files = task.file_assets %} {% if files|length %} {# Sort by uploaded_at descending in-memory #} {% for f in files|sort(attribute='uploaded_at', reverse=True) %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">{{ f.filename }}</div>
+                            <div class="small text-muted">{{ f.mime or 'file' }} • {{ f.size_bytes or '—' }} bytes • {{ f.uploaded_at }}</div>
+                        </div>
+                        <!-- Download route to be added/gated by invoice status -->
+                        <button class="btn btn-sm btn-outline-secondary" disabled title="Download will be enabled after payment / when available">Download</button>
+                    </li>
+                    {% endfor %} {% else %}
+                    <li class="list-group-item text-muted">No files yet.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Meetings / Review -->
+        <div class="card mb-4">
+            <div class="card-header"><strong>Review Meeting</strong></div>
+            <div class="card-body">
+                {% if task.meetings and task.meetings|length %}
+                <ul class="list-group">
+                    {% for m in task.meetings %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">{{ m.provider|replace('_',' ')|title }} — {{ m.status }}</div>
+                            <div class="small text-muted">Scheduled for: {{ m.scheduled_for }}</div>
+                            {% if m.join_url %}
+                            <div><a href="{{ m.join_url }}" target="_blank" rel="noopener">Join link</a></div>
+                            {% endif %}
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="text-muted">No review meeting scheduled yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="col-lg-4">
+
+        <!-- Quotes -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Quotes</strong>
+                <span class="small text-muted">Accept to start work</span>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% if task.quotes and task.quotes|length %} {% for q in task.quotes %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-semibold">{{ q.currency }} {{ '%.2f'|format(q.proposed_price) }}</div>
+                                <div class="small text-muted">{{ q.pay_option.replace('_',' ') }} • valid until {{ q.valid_until }}</div>
+                                {% if q.message %}
+                                <div class="small">{{ q.message }}</div>{% endif %}
+                            </div>
+                            <span class="badge bg-secondary">{{ q.status }}</span>
+                        </div>
+
+                        {% if q.status in ['sent', 'pending'] %}
+                        <div class="mt-2 d-flex align-items-center gap-2">
+                            <!-- Accept -->
+                            <form method="POST" action="{{ url_for('client.quote_accept', quote_id=q.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button class="btn btn-sm btn-success">Accept</button>
+                            </form>
+
+                            <!-- Decline / Suggest (opens THIS quote's modal) -->
+                            <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#counterOfferModal-{{ q.id }}">
+                  Decline / Suggest Amount
+                </button>
+                        </div>
+                        {% endif %} {# --- PER-QUOTE COUNTER MODAL (Option A) --- #}
+                        <div class="modal fade" id="counterOfferModal-{{ q.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <form class="modal-content" method="POST" action="{{ url_for('client.quote_decline', quote_id=q.id) }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Suggest a counter offer</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Your suggested amount</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">{{ q.currency or 'USD' }}</span>
+                                                <input type="number" step="0.01" min="0" name="client_counter_amount" class="form-control" required>
+                                            </div>
+                                            <div class="form-text">Original quote: {{ q.proposed_price }} {{ q.currency }}</div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Reason (optional but recommended)</label>
+                                            <textarea name="client_counter_reason" class="form-control" rows="3" placeholder="Tell us your budget constraints, scope changes, or timing."></textarea>
+                                        </div>
+                                        <div class="alert alert-info">
+                                            We’ll notify the team. They can accept your offer and start immediately, or respond with an adjustment.
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+                                        <button class="btn btn-danger" type="submit">Send counter offer</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                        {# --- END PER-QUOTE MODAL --- #} {# Optional: show state after counter #} {% if q.status == 'countered' and q.client_counter_status == 'pending' %}
+                        <div class="mt-3 p-2 border rounded bg-warning-subtle">
+                            <div class="fw-semibold">Counter submitted</div>
+                            <div class="small">
+                                You suggested:
+                                <span class="badge bg-light text-dark">
+                      {{ q.client_counter_currency or q.currency }}
+                      {{ '%.2f'|format(q.client_counter_amount or 0) }}
+                    </span> {% if q.client_counter_at %} • {{ q.client_counter_at }}{% endif %}
+                            </div>
+                            {% if q.client_counter_reason %}
+                            <div class="small mt-1"><em>Reason:</em> {{ q.client_counter_reason }}</div>
+                            {% endif %}
+                            <div class="small text-muted mt-1">Awaiting admin response.</div>
+                        </div>
+                        {% elif q.client_counter_status in ['accepted','rejected'] %}
+                        <div class="mt-2 small text-muted">
+                            Your counter was {{ q.client_counter_status }}.
+                        </div>
+                        {% endif %}
+                    </li>
+                    {% endfor %} {% else %}
+                    <li class="list-group-item text-muted">No quotes yet.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        {# ---------- Payment logic helpers ---------- #} {% set accepted = (task.quotes|selectattr('status','equalto','accepted')|list|first) %} {% set is_pay_now = accepted and (accepted.pay_option or '').lower() == 'pay_now' %} {% set is_pay_on_delivery =
+        accepted and (accepted.pay_option or '').lower() == 'pay_on_delivery' %} {# Pay button becomes active if: pay_now OR (pay_on_delivery AND task is in review) #} {% set can_pay_now = is_pay_now or (is_pay_on_delivery and task.status in ['review','review_scheduled'])
+        %}
+
+        <!-- Invoices & Payment -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Invoices</strong>
+                <span class="small text-muted">Pay to receive final deliverables</span>
+            </div>
+            <div class="card-body">
+                <ul class="list-group">
+                    {% if task.invoices and task.invoices|length %} {% for inv in task.invoices %}
+                    <li class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-semibold">{{ inv.currency }} {{ '%.2f'|format(inv.amount) }}</div>
+                                <div class="small text-muted">Issued: {{ inv.issued_at }} • Status: {{ inv.status }}</div>
+                                {% if inv.status == 'unpaid' and is_pay_on_delivery and not can_pay_now %}
+                                <div class="small text-muted">Payment activates when your task enters <strong>review</strong>.</div>
+                                {% endif %}
+                            </div>
+
+                            {% if inv.status == 'unpaid' %} {% if can_pay_now %}
+                            <a class="btn btn-sm btn-primary" href="{{ url_for('payments.pay_invoice', invoice_id=inv.id) }}">
+                      Pay Now
+                    </a> {% else %}
+                            <button class="btn btn-sm btn-outline-secondary" disabled title="Payment opens when your task enters review">
+                      Pay Now
+                    </button> {% endif %} {% else %}
+                            <span class="badge bg-success">Paid</span> {% endif %}
+                        </div>
+
+                        {% if inv.status == 'unpaid' %}
+                        <div class="mt-2" style="max-width:340px">
+                            {{ progress_bar(85, text='Awaiting payment', size='sm', color='warning') }}
+                        </div>
+                        {% endif %}
+                    </li>
+                    {% endfor %} {% else %} {% if is_pay_on_delivery %}
+                    <li class="list-group-item text-muted">
+                        No invoice yet. It will appear once your task moves to <strong>review</strong>.
+                    </li>
+                    {% else %}
+                    <li class="list-group-item text-muted">No invoices yet.</li>
+                    {% endif %} {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Status Tips -->
+        <div class="card">
+            <div class="card-header"><strong>Next Steps</strong></div>
+            <div class="card-body small text-muted">
+                <ul class="mb-0">
+                    <li>If a quote is available, accept it to begin.</li>
+                    <li>We’ll schedule a short review when a draft is ready.</li>
+                    <li>Final downloads unlock after payment where applicable.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pre-wrap {
+        white-space: pre-wrap;
+    }
+</style>
+
+{% endblock %}

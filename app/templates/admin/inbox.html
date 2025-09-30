@@ -1,0 +1,280 @@
+{% extends 'base.html' %} {% from 'macros.html' import progress_cell, task_status_progress %} {% block content %} {# Admin Inbox + Dashboard tools Context: - tasks: List[TaskRequest] - freelancers: optional List[User] - page, pages: optional ints - counts:
+optional dict per status #}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <h3 class="mb-2 mb-md-0">Admin Inbox</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.inbox') }}">Admin Home</a>
+    </div>
+</div>
+
+{# Admin tools / quick actions #}
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <span class="text-muted me-1">Admin tools:</span>
+            <a href="/admin/users" class="btn btn-sm btn-outline-primary">👥 Users</a>
+            <a href="/admin/freelancers" class="btn btn-sm btn-outline-primary">🧑‍💻 Freelancers</a>
+            <a href="{{ url_for('admin.kyc_queue') }}"> 🪪 KYC Queue</a>
+            <a href="/admin/payments" class="btn btn-sm btn-outline-primary">💳 Payments</a>
+            <a href="/admin/reports" class="btn btn-sm btn-outline-primary">📈 Reports</a>
+            <a href="/admin/settings" class="btn btn-sm btn-outline-secondary">⚙️ Settings</a>
+            <div class="vr mx-2 d-none d-md-block"></div>
+            <a href="{{ url_for('admin.inbox') }}" class="btn btn-sm btn-primary">📬 Task Inbox</a>
+            <a href="{{ url_for('admin.tickets_list') }}" class="btn btn-sm btn-outline-primary">🎟 Tickets</a>
+            <a href="{{ url_for('admin.subscribers_list') }}" class="btn btn-sm btn-outline-primary">📰 Subscriptions</a>
+            <a href="{{ url_for('admin.ratings_list') }}" class="btn btn-sm btn-outline-primary">⭐ Ratings</a>
+            <a href="{{ url_for('admin.careers_list') }}" class="btn btn-sm btn-outline-primary">📄 Careers</a>
+
+        </div>
+    </div>
+</div>
+
+{# KPI chips #} {% set statuses = ['submitted','quoted','in_progress','review_scheduled','awaiting_payment','delivered','closed','canceled'] %}
+<div class="row g-3 mb-4">
+    {% for s in statuses %}
+    <div class="col-6 col-sm-4 col-lg-3 col-xl-2">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">{{ s.replace('_',' ')|title }}</div>
+                <div class="fs-4 fw-bold">
+                    {{ counts[s] if counts and s in counts else (tasks|selectattr('status','equalto',s)|list|length) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <form class="row g-2 align-items-center" method="GET" action="{{ url_for('admin.inbox') }}">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text">Search</span>
+                    <input name="q" value="{{ request.args.get('q','') }}" type="text" class="form-control" placeholder="title, category, client name, ID…">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="status">
+          <option value="">All statuses</option>
+          {% for s in statuses %}
+            <option value="{{ s }}" {% if request.args.get('status') == s %}selected{% endif %}>{{ s.replace('_',' ') }}</option>
+          {% endfor %}
+        </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" name="sort">
+          <option value="-created" {% if request.args.get('sort','-created') == '-created' %}selected{% endif %}>Newest</option>
+          <option value="created" {% if request.args.get('sort') == 'created' %}selected{% endif %}>Oldest</option>
+          <option value="deadline" {% if request.args.get('sort') == 'deadline' %}selected{% endif %}>Earliest deadline</option>
+          <option value="-deadline" {% if request.args.get('sort') == '-deadline' %}selected{% endif %}>Latest deadline</option>
+        </select>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-primary">Apply</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body p-0">
+        {% if tasks and tasks|length %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="inboxTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 36px;"><input class="form-check-input" type="checkbox" id="selectAll"></th>
+                        <th class="text-nowrap">ID</th>
+                        <th style="min-width: 260px;">Task</th>
+                        <th>Client</th>
+                        <th>Status</th>
+                        <th style="min-width: 180px;">Progress</th>
+                        <th class="text-nowrap">Deadline</th>
+                        <th class="text-nowrap">Created</th>
+                        <th class="text-nowrap">Assignee</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tasks %}
+                    <tr data-title="{{ (t.title or '') ~ ' ' ~ (t.category or '') }}" data-status="{{ t.status }}">
+                        <td><input class="form-check-input row-check" type="checkbox" value="{{ t.id }}"></td>
+                        <td class="text-muted">#{{ t.id }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ t.title }}</div>
+                            <div class="small text-muted">{{ t.category or '—' }}</div>
+                        </td>
+                        <td>
+                            {% if t.client %}
+                            <div class="fw-semibold">{{ t.client.name or 'Client' }}</div>
+                            <div class="small text-muted">{{ t.client.email }}</div>
+                            {% else %}
+                            <span class="text-muted">—</span> {% endif %}
+                        </td>
+
+                        {# Inline status control that posts to admin.inbox_set_status #}
+                        <td>
+                            <form method="POST" action="{{ url_for('admin.inbox_set_status', task_id=t.id) }}" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 160px;">
+                  {% set opts = [
+                    'submitted','quoted','pending_accept','in_progress',
+                    'review','review_scheduled','awaiting_payment',
+                    'delivered','closed','cancelled'
+                  ] %}
+                  {% for s in opts %}
+                    <option value="{{ s }}" {{ 'selected' if (t.status or '') == s else '' }}>{{ s.replace('_',' ') }}</option>
+                  {% endfor %}
+                </select>
+                            </form>
+                        </td>
+
+                        <td>{{ progress_cell(t.status) }}</td>
+                        <td>{{ t.deadline_at or '—' }}</td>
+                        <td>{{ t.created_at or '—' }}</td>
+                        <td>
+                            {% set a = (t.assignments[0] if t.assignments is defined and t.assignments else None) %} {% if a and a.assignee %}
+                            <div class="fw-semibold">{{ a.assignee.name }}</div>
+                            <div class="small text-muted">{{ a.status }}</div>
+                            {% else %}
+                            <span class="text-muted">Unassigned</span> {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.task_triage', task_id=t.id) }}">Triage</a>
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                  <span class="visually-hidden">Actions</span>
+                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{{ url_for('client.task_view', task_id=t.id) }}" target="_blank">Open as client</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.task_triage', task_id=t.id) }}#quoteModal">Create quote…</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin.task_triage', task_id=t.id) }}#assignModal">Assign…</a></li>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
+                                    <li>
+                                        <form method="POST" action="{{ url_for('admin.task_archive', task_id=t.id) }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button class="dropdown-item text-danger" type="submit">Archive</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Bulk actions bar -->
+        <div class="border-top p-3 d-flex flex-wrap gap-2 align-items-center">
+            <div class="small text-muted me-auto"><span id="selCount">0</span> selected</div>
+
+            <!-- Bulk Assign -->
+            <form method="POST" action="{{ url_for('admin.bulk_assign') }}" class="d-flex align-items-center gap-2 bulk-form" id="bulkAssignForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> {% if freelancers is defined and freelancers %}
+                <select class="form-select" name="assignee_id" required style="max-width: 280px;">
+            <option value="" disabled selected>Select freelancer…</option>
+            {% for f in freelancers %}
+              <option value="{{ f.id }}">{{ f.name }} ({{ f.email }})</option>
+            {% endfor %}
+          </select>
+                <input class="form-control" name="accept_expires_at" type="datetime-local" style="max-width: 220px;">
+                <button class="btn btn-primary">Assign Selected</button> {% else %}
+                <button class="btn btn-outline-secondary" type="button" disabled title="No freelancers loaded">Assign Selected</button> {% endif %}
+            </form>
+
+            <!-- Bulk Status -->
+            <form method="POST" action="{{ url_for('admin.bulk_status') }}" class="d-flex align-items-center gap-2 bulk-form" id="bulkStatusForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="new_status" class="form-select" required style="max-width: 220px;">
+          <option value="" disabled selected>Set status…</option>
+          <option value="submitted">Submitted</option>
+          <option value="quoted">Quoted</option>
+          <option value="pending_accept">Pending Accept</option>
+          <option value="in_progress">In Progress</option>
+          <option value="review">Review</option>
+          <option value="review_scheduled">Review Scheduled</option>
+          <option value="awaiting_payment">Awaiting Payment</option>
+          <option value="delivered">Delivered</option>
+          <option value="closed">Closed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+                <button class="btn btn-outline-primary">Update</button>
+            </form>
+        </div>
+
+        {% else %}
+        <div class="p-4 text-center text-muted">No matching tasks.</div>
+        {% endif %}
+    </div>
+
+    {# Pagination #} {% if pages and pages > 1 %}
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div class="small text-muted">Page {{ page }} of {{ pages }}</div>
+        <nav>
+            <ul class="pagination mb-0">
+                {% set prev = page-1 %}{% set next = page+1 %}
+                <li class="page-item {% if page<=1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.inbox', page=1, q=request.args.get('q'), status=request.args.get('status'), sort=request.args.get('sort')) }}">« First</a>
+                </li>
+                <li class="page-item {% if page<=1 %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.inbox', page=prev, q=request.args.get('q'), status=request.args.get('status'), sort=request.args.get('sort')) }}">‹ Prev</a>
+                </li>
+                <li class="page-item {% if page>=pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.inbox', page=next, q=request.args.get('q'), status=request.args.get('status'), sort=request.args.get('sort')) }}">Next ›</a>
+                </li>
+                <li class="page-item {% if page>=pages %}disabled{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin.inbox', page=pages, q=request.args.get('q'), status=request.args.get('status'), sort=request.args.get('sort')) }}">Last »</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Bulk select + dynamic task_ids injection for bulk forms
+    (function() {
+        const selectAll = document.getElementById('selectAll');
+        const checks = Array.from(document.querySelectorAll('.row-check'));
+        const selCount = document.getElementById('selCount');
+
+        function selectedIds() {
+            return checks.filter(c => c.checked).map(c => c.value);
+        }
+
+        function updateCount() {
+            if (selCount) selCount.textContent = selectedIds().length;
+        }
+
+        selectAll && selectAll.addEventListener('change', () => {
+            checks.forEach(c => c.checked = selectAll.checked);
+            updateCount();
+        });
+        checks.forEach(c => c.addEventListener('change', updateCount));
+        updateCount();
+
+        document.querySelectorAll('form.bulk-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const ids = selectedIds();
+                if (!ids.length) {
+                    e.preventDefault();
+                    alert('Select at least one task using the checkboxes.');
+                    return;
+                }
+                Array.from(form.querySelectorAll('input[name="task_ids"]')).forEach(n => n.remove());
+                ids.forEach(id => {
+                    const h = document.createElement('input');
+                    h.type = 'hidden';
+                    h.name = 'task_ids';
+                    h.value = id;
+                    form.appendChild(h);
+                });
+            });
+        });
+    })();
+</script>
+
+{% endblock %}

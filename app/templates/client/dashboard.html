@@ -1,0 +1,202 @@
+{% extends 'base.html' %} {% from 'macros.html' import progress_cell, task_status_progress %} {% block content %} {% macro status_badge(s) -%} {% set s = (s or '').lower() %} {% if s in ['submitted'] %}<span class="badge bg-secondary">{{ s }}</span> {%
+elif s in ['quoted'] %}<span class="badge bg-warning text-dark">{{ s }}</span> {% elif s in ['in_progress'] %}<span class="badge bg-primary">{{ s|replace('_',' ') }}</span> {% elif s in ['review_scheduled'] %}<span class="badge bg-info text-dark">{{ s|replace('_',' ') }}</span>{%
+elif s in ['awaiting_payment'] %}<span class="badge bg-warning text-dark">{{ s|replace('_',' ') }}</span> {% elif s in ['delivered','closed'] %}<span class="badge bg-success">{{ s }}</span> {% elif s in ['cancelled'] %}<span class="badge bg-dark">{{ s }}</span>{%
+else %}<span class="badge bg-light text-dark">{{ s or 'unknown' }}</span>{% endif %} {%- endmacro %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+    <h3 class="mb-2 mb-md-0">My Tasks</h3>
+    <div class="d-flex gap-2">
+        <a class="btn btn-success" href="{{ url_for('client.task_new') }}">New Task</a>
+    </div>
+</div>
+
+{# KPI Cards #} {% set total = tasks|length %} {% set count_submitted = tasks|selectattr('status','equalto','submitted')|list|length %} {% set count_quoted = tasks|selectattr('status','equalto','quoted')|list|length %} {% set count_progress = tasks|selectattr('status','equalto','in_progress')|list|length
+%} {% set count_review = tasks|selectattr('status','equalto','review_scheduled')|list|length %} {% set count_duepay = tasks|selectattr('status','equalto','awaiting_payment')|list|length %} {% set count_done = tasks|selectattr('status','equalto','delivered')|list|length
++ tasks|selectattr('status','equalto','closed')|list|length %}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3 col-lg-2">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Total</div>
+                <div class="fs-4 fw-bold">{{ total }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Quoted</div>
+                <div class="fs-4 fw-bold">{{ count_quoted }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">In Progress</div>
+                <div class="fs-4 fw-bold">{{ count_progress }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Review</div>
+                <div class="fs-4 fw-bold">{{ count_review }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Awaiting Payment</div>
+                <div class="fs-4 fw-bold">{{ count_duepay }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3 col-lg-2">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Done</div>
+                <div class="fs-4 fw-bold">{{ count_done }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="input-group" style="max-width: 360px;">
+                        <span class="input-group-text">Search</span>
+                        <input id="search" type="text" class="form-control" placeholder="Title, category…">
+                    </div>
+                    <select id="statusFilter" class="form-select" style="max-width: 220px;">
+            <option value="">All statuses</option>
+            <option>submitted</option>
+            <option>quoted</option>
+            <option>in_progress</option>
+            <option>review_scheduled</option>
+            <option>awaiting_payment</option>
+            <option>delivered</option>
+            <option>closed</option>
+            <option>cancelled</option>
+          </select>
+                    <div class="ms-auto small text-muted">Showing <span id="visibleCount">{{ total }}</span> of {{ total }}</div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if tasks and tasks|length %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="tasksTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-nowrap">ID</th>
+                                <th style="min-width: 220px;">Title</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th style="min-width: 180px;">Progress</th>
+                                <th class="text-nowrap">Deadline</th>
+                                <th class="text-nowrap">Created</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in tasks %}
+                            <tr data-title="{{ (t.title or '') ~ ' ' ~ (t.category or '') }}" data-status="{{ t.status }}">
+                                <td class="text-muted">#{{ t.id }}</td>
+                                <td class="fw-semibold">{{ t.title }}</td>
+                                <td>{{ t.category or '—' }}</td>
+                                <td>{{ status_badge(t.status) }}</td>
+                                <td>{{ progress_cell(t.status) }}</td>
+                                <td>{{ t.deadline_at or '—' }}</td>
+                                <td>{{ t.created_at or '—' }}</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('client.task_view', task_id=t.id) }}">Open</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4">
+                    <div class="text-center text-muted">
+                        <div class="mb-2">You have no tasks yet.</div>
+                        <a class="btn btn-success" href="{{ url_for('client.task_new') }}">Create your first task</a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="position-sticky" style="top: 1rem;">
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Upcoming Reviews</strong>
+                    <span class="small text-muted">Next 7 days</span>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% set items = [] %} {% for t in tasks %} {% if t.meetings is defined and t.meetings %} {% for m in t.meetings %} {% if m.scheduled_for and (m.status == 'scheduled') %}
+                        <li class="list-group-item">
+                            <div class="fw-semibold">Task #{{ t.id }} — {{ t.title }}</div>
+                            <div class="small text-muted">{{ m.provider|replace('_',' ')|title }} • {{ m.scheduled_for }}</div>
+                            {% if m.join_url %}<a class="small" href="{{ m.join_url }}" target="_blank">Join</a>{% endif %}
+                        </li>
+                        {% endif %} {% endfor %} {% endif %} {% endfor %} {% if not items or items|length == 0 %}
+                        <li class="list-group-item text-muted">No upcoming reviews.</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><strong>Tips</strong></div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li>Click <em>Open</em> to track quotes, invoices, and files for a task.</li>
+                        <li>Deadlines are flexible until you accept a quote — tell us constraints.</li>
+                        <li>Need a rush? Mention it in the description; we’ll prioritize.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const search = document.getElementById('search');
+        const statusFilter = document.getElementById('statusFilter');
+        const table = document.getElementById('tasksTable');
+        const countEl = document.getElementById('visibleCount');
+        if (!table) return;
+
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+
+        function apply() {
+            const q = (search.value || '').toLowerCase();
+            const s = (statusFilter.value || '').toLowerCase();
+            let visible = 0;
+            rows.forEach(r => {
+                const title = (r.getAttribute('data-title') || '').toLowerCase();
+                const st = (r.getAttribute('data-status') || '').toLowerCase();
+                const show = (!q || title.includes(q)) && (!s || st === s);
+                r.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            if (countEl) countEl.textContent = visible;
+        }
+        search && search.addEventListener('input', apply);
+        statusFilter && statusFilter.addEventListener('change', apply);
+        apply();
+    })();
+</script>
+
+{% endblock %}

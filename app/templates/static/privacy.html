@@ -1,0 +1,258 @@
+{% extends 'base.html' %} {% set title = 'Privacy Policy — TaskDesk' %} {% block extra_css %}
+<style>
+    .legal-hero {
+        background: var(--bs-body-bg);
+        border-bottom: 1px solid var(--bs-border-color)
+    }
+    
+    .legal-hero .lead {
+        color: var(--bs-secondary-color)
+    }
+    
+    .toc ol {
+        columns: 2;
+        column-gap: 1.25rem
+    }
+    
+    .toc a {
+        text-decoration: none
+    }
+    
+    .legal .card {
+        border: 1px solid var(--bs-border-color);
+        border-radius: .75rem
+    }
+    
+    .legal .section h2 {
+        scroll-margin-top: 6rem
+    }
+    
+    .note {
+        border-left: 3px solid var(--bs-primary);
+        padding: .75rem 1rem;
+        background: rgba(13, 110, 253, .05);
+        border-radius: .5rem
+    }
+    
+    @media print {
+        .navbar,
+        .footer,
+        .toast-container {
+            display: none!important
+        }
+        .container {
+            max-width: 100%!important
+        }
+        a[href]:after {
+            content: " (" attr(href) ")";
+            font-size: .9em;
+            color: #666
+        }
+        body {
+            font-size: 12pt
+        }
+    }
+</style>
+{% endblock %} {% block content %}
+<section class="legal-hero py-4">
+    <div class="container">
+        <h1 class="mb-1">TaskDesk — Privacy Policy</h1>
+        <p class="lead mb-0">How TaskDesk collects, uses, shares, and protects your information across our marketplace and software.</p>
+        <div class="small text-secondary">Effective: <span class="fw-semibold">28 September 2025</span> · Last updated: <span class="fw-semibold">28 September 2025</span></div>
+    </div>
+</section>
+
+<div class="container legal my-4">
+    <div class="row g-4">
+        <div class="col-12 col-lg-3 order-lg-2">
+            <div class="card p-3 sticky-lg-top" style="top:6rem">
+                <div class="fw-semibold mb-2">Contents</div>
+                <nav class="toc small">
+                    <ol class="ps-3">
+                        <li><a href="#scope">Scope & Who We Are</a></li>
+                        <li><a href="#data-we-collect">Data We Collect</a></li>
+                        <li><a href="#sources">Sources of Data</a></li>
+                        <li><a href="#uses">How We Use Data (Purposes & Lawful Bases)</a></li>
+                        <li><a href="#cookies">Cookies, Analytics & Tracking</a></li>
+                        <li><a href="#payments">Payments & Payouts</a></li>
+                        <li><a href="#sharing">How We Share Data</a></li>
+                        <li><a href="#transfers">International Data Transfers</a></li>
+                        <li><a href="#retention">Data Retention</a></li>
+                        <li><a href="#security">Security Measures</a></li>
+                        <li><a href="#rights">Your Privacy Rights</a></li>
+                        <li><a href="#marketing">Marketing Preferences</a></li>
+                        <li><a href="#children">Children’s Privacy</a></li>
+                        <li><a href="#changes">Changes to This Policy</a></li>
+                        <li><a href="#contact">Contact & Requests</a></li>
+                        <li><a href="#definitions">Definitions</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-9">
+            <div class="note mb-3"><strong>Quick summary (not a substitute for the full policy):</strong> We collect account, profile, usage, and payment‑related data to run TaskDesk’s client–freelancer marketplace. We use it to provide features, prevent fraud, process payments,
+                and improve the service. We share data with trusted processors (e.g., hosting, analytics, payment providers) and when required by law. You can access, correct, or delete your data, and opt out of marketing. Sensitive data is avoided unless
+                strictly necessary and lawful.</div>
+
+            <div id="scope" class="section mb-4">
+                <h2>1) Scope & Who We Are</h2>
+                <p>This Privacy Policy explains how <strong>TaskDesk</strong> ("<strong>TaskDesk</strong>", "<strong>we</strong>", "<strong>us</strong>") handles personal data of visitors, registered users acting as <em>Clients</em> or <em>Freelancers</em>,
+                    and other individuals whose data we process in connection with our marketplace, websites, mobile apps, APIs, and related services (the <em>“Service”</em>).</p>
+                <p>For users in Uganda, TaskDesk complies with the <em>Data Protection and Privacy Act, 2019</em> (Uganda) and applicable regulations. If you are in the EEA/UK, we also process data according to the EU/UK GDPR where applicable. Where local
+                    laws differ, we will honor rights required by your jurisdiction.</p>
+            </div>
+
+            <div id="data-we-collect" class="section mb-4">
+                <h2>2) Data We Collect</h2>
+                <h6>2.1 Account & Profile</h6>
+                <ul>
+                    <li>Name, username, password (hashed), email, phone, country and time zone.</li>
+                    <li>Profile details: headline, skills, bio, portfolio links, avatar.</li>
+                    <li>Business information (company name, registration number, VAT/TIN) if provided.</li>
+                </ul>
+                <h6>2.2 Identity & KYC (where required)</h6>
+                <ul>
+                    <li>Government ID, selfie, date of birth, address, proof of address, and related verification metadata collected via third‑party verification providers.</li>
+                </ul>
+                <h6>2.3 Financial (limited)</h6>
+                <ul>
+                    <li>Payment and payout metadata (e.g., transaction IDs, status, amounts, currency, partial card brand/last4 where provided by processors). <em>We do not store full card numbers.</em></li>
+                    <li>Mobile money identifiers to enable payouts where supported.</li>
+                </ul>
+                <h6>2.4 Marketplace & Communications</h6>
+                <ul>
+                    <li>Task posts, proposals, milestones, messages, files, and activity history.</li>
+                    <li>Reviews, ratings, and support tickets.</li>
+                </ul>
+                <h6>2.5 Usage & Device</h6>
+                <ul>
+                    <li>Log data (IP address, device identifiers, browser type, pages viewed, referring URLs, date/time, language).</li>
+                    <li>Product analytics events (feature usage, clicks, performance metrics, crash data).</li>
+                    <li>Approximate location derived from IP (city/region level). We do not collect precise GPS unless you explicitly enable a location feature.</li>
+                </ul>
+                <h6>2.6 Optional Sensitive Data</h6>
+                <p>We do not seek to collect special categories of data. If a user uploads such data within a task, they are responsible for having a lawful basis and for minimizing exposure. We may restrict processing or require deletion if risk is high.</p>
+            </div>
+
+            <div id="sources" class="section mb-4">
+                <h2>3) Sources of Data</h2>
+                <ul>
+                    <li><strong>Directly from you</strong>: forms, profile, uploads, messages, support.</li>
+                    <li><strong>Automatically</strong>: through cookies, SDKs, and server logs.</li>
+                    <li><strong>Third parties</strong>: identity/KYC vendors, payment processors, analytics providers, fraud‑prevention partners, publicly available sources.</li>
+                </ul>
+            </div>
+
+            <div id="uses" class="section mb-4">
+                <h2>4) How We Use Data (Purposes & Lawful Bases)</h2>
+                <p>We process personal data for the following purposes and, where applicable, under these lawful bases:</p>
+                <ul>
+                    <li><strong>Provide the Service</strong>: account creation, authentication, profiles, project workflows, messaging, notifications (Contract; Legitimate interests).</li>
+                    <li><strong>Payments & payouts</strong>: charge Clients, remit to Freelancers, prevent fraud and chargebacks (Contract; Legal obligation; Legitimate interests).</li>
+                    <li><strong>Safety & compliance</strong>: KYC/AML screening, sanctions checks, preventing abuse and violations (Legal obligation; Legitimate interests).</li>
+                    <li><strong>Support & communications</strong>: respond to inquiries, service announcements (Contract; Legitimate interests).</li>
+                    <li><strong>Product improvement</strong>: analytics, A/B testing, debugging, training internal models to improve features (Legitimate interests; Consent where required).</li>
+                    <li><strong>Marketing</strong>: newsletters, promotions, referral programs (Consent where required; Legitimate interests otherwise).</li>
+                </ul>
+            </div>
+
+            <div id="cookies" class="section mb-4">
+                <h2>5) Cookies, Analytics & Tracking</h2>
+                <p>We use cookies and similar technologies to keep you signed in, remember preferences, measure traffic, and understand feature usage. Where required, we display a consent banner and honor your choices.</p>
+                <ul>
+                    <li><strong>Essential</strong>: authentication, security, fraud prevention.</li>
+                    <li><strong>Functional</strong>: preferences, localization, improved experience.</li>
+                    <li><strong>Analytics</strong>: product analytics, performance, crash data.</li>
+                    <li><strong>Marketing</strong>: only with consent; you may opt out anytime.</li>
+                </ul>
+                <p>You can control cookies via browser settings. Disabling essential cookies may break the Service.</p>
+            </div>
+
+            <div id="payments" class="section mb-4">
+                <h2>6) Payments & Payouts</h2>
+                <p>Payments are processed by third‑party providers (e.g., card networks, mobile money, payment gateways). We receive limited payment metadata needed to confirm status and deliver services. Payouts to Freelancers may require identity and account
+                    verification. Your use of a payment method is subject to the provider’s privacy policy and terms.</p>
+            </div>
+
+            <div id="sharing" class="section mb-4">
+                <h2>7) How We Share Data</h2>
+                <ul>
+                    <li><strong>Service providers (processors)</strong>: hosting, cloud storage, analytics, email/SMS, KYC/AML, payments, customer support.</li>
+                    <li><strong>Other users</strong>: information you choose to include in profiles, proposals, tasks, reviews, and messages is visible as configured in the product.</li>
+                    <li><strong>Legal & safety</strong>: to comply with law, enforce terms, protect rights, security, and prevent fraud.</li>
+                    <li><strong>Business transfers</strong>: during mergers, acquisitions, financing, or sale of assets, subject to confidentiality.</li>
+                </ul>
+                <p>We do not sell your personal data. We do not share for cross‑context behavioral advertising without your consent.</p>
+            </div>
+
+            <div id="transfers" class="section mb-4">
+                <h2>8) International Data Transfers</h2>
+                <p>We may process data in countries outside your own. Where required, we rely on appropriate safeguards such as Standard Contractual Clauses (SCCs) and enter into data processing agreements with our processors to protect your information.</p>
+            </div>
+
+            <div id="retention" class="section mb-4">
+                <h2>9) Data Retention</h2>
+                <p>We retain personal data for as long as necessary to provide the Service, comply with legal obligations (e.g., accounting, AML), resolve disputes, and enforce agreements. Retention periods vary by category; for example:</p>
+                <ul>
+                    <li>Account & profile: for the life of the account, then deleted or anonymized within a reasonable period.</li>
+                    <li>Transactions & invoices: typically retained for 5–7 years for tax/compliance, depending on jurisdiction.</li>
+                    <li>Logs & analytics: retained for shorter periods necessary for security and product improvement.</li>
+                </ul>
+            </div>
+
+            <div id="security" class="section mb-4">
+                <h2>10) Security Measures</h2>
+                <p>We implement reasonable administrative, technical, and organizational measures designed to protect personal data, including encryption in transit, access controls, and monitoring. No system is 100% secure; you are responsible for safeguarding
+                    your credentials and maintaining up‑to‑date software on your devices.</p>
+            </div>
+
+            <div id="rights" class="section mb-4">
+                <h2>11) Your Privacy Rights</h2>
+                <p>Depending on your location, you may have rights to:</p>
+                <ul>
+                    <li>Access and obtain a copy of your personal data.</li>
+                    <li>Correct inaccurate or incomplete data.</li>
+                    <li>Delete your data (subject to legal exceptions).</li>
+                    <li>Restrict or object to certain processing.</li>
+                    <li>Data portability (receive data in a machine‑readable format).</li>
+                    <li>Withdraw consent where processing is based on consent.</li>
+                    <li>Lodge a complaint with a supervisory authority (e.g., Personal Data Protection Office in Uganda; or your local DPA).</li>
+                </ul>
+                <p>To exercise rights, see <a href="#contact">Contact & Requests</a>. We may verify your identity before responding.</p>
+            </div>
+
+            <div id="marketing" class="section mb-4">
+                <h2>12) Marketing Preferences</h2>
+                <p>You may opt out of marketing emails by using the “unsubscribe” link in messages or by updating your settings. Service and transactional communications (e.g., security alerts, receipts) are necessary and you cannot opt out of them while
+                    using the Service.</p>
+            </div>
+
+            <div id="children" class="section mb-4">
+                <h2>13) Children’s Privacy</h2>
+                <p>The Service is not directed to children under the age of 13, or under the age of majority where higher by law. We do not knowingly collect personal data from children. If you believe a child has provided data, contact us to request deletion.</p>
+            </div>
+
+            <div id="changes" class="section mb-4">
+                <h2>14) Changes to This Policy</h2>
+                <p>We may update this Privacy Policy from time to time. If we make material changes, we will notify you through the Service or by email and indicate the “Last updated” date above. Your continued use of the Service after the effective date
+                    means you accept the changes.</p>
+            </div>
+
+            <div id="contact" class="section mb-5">
+                <h2>15) Contact & Requests</h2>
+                <p>To ask questions or exercise your rights, contact us at <a href="mailto:support@taskdesk.ug">support@taskdesk.ug</a> or <a href="mailto:support@taskdesk.ug">support@taskdesk.ug</a>. For security reasons, we may require verification steps
+                    before fulfilling requests.</p>
+                <p class="small text-secondary mb-0">If you are in Uganda, you may also contact the <em>Personal Data Protection Office</em>. If you are in the EEA/UK, you can contact your local data protection authority. This document is informational and not legal advice; consider independent
+                    legal review for your circumstances.</p>
+            </div>
+
+            <div id="definitions" class="section mb-5">
+                <h2>16) Definitions</h2>
+                <p><strong>“Client”</strong>: a user purchasing services. <strong>“Freelancer”</strong>: a user providing services. <strong>“Personal data”</strong>: information relating to an identified or identifiable individual. <strong>“Processor”</strong>:
+                    a service provider processing data on our behalf.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

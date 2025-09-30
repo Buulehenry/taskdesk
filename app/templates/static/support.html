@@ -1,0 +1,385 @@
+{% extends 'base.html' %} {% set title = 'Support — TaskDesk' %} {% block extra_css %}
+<style>
+    .support-hero {
+        background: var(--bs-body-bg);
+        border-bottom: 1px solid var(--bs-border-color)
+    }
+    
+    .support-hero .lead {
+        color: var(--bs-secondary-color)
+    }
+    
+    .toc a {
+        text-decoration: none
+    }
+    
+    .support .card {
+        border: 1px solid var(--bs-border-color);
+        border-radius: .75rem
+    }
+    
+    .support .section h2 {
+        scroll-margin-top: 6rem
+    }
+    
+    .note {
+        border-left: 3px solid var(--bs-primary);
+        padding: .75rem 1rem;
+        background: rgba(13, 110, 253, .05);
+        border-radius: .5rem
+    }
+    
+    .kb-list li+li {
+        margin-top: .5rem
+    }
+    
+    @media print {
+        .navbar,
+        .footer,
+        .toast-container {
+            display: none!important
+        }
+        .container {
+            max-width: 100%!important
+        }
+        a[href]:after {
+            content: " (" attr(href) ")";
+            font-size: .9em;
+            color: #666
+        }
+        body {
+            font-size: 12pt
+        }
+    }
+</style>
+{% endblock %} {% block content %}
+<section class="support-hero py-4">
+    <div class="container">
+        <h1 class="mb-1">TaskDesk Support</h1>
+        <p class="lead mb-0">Get help with your account, tasks, payments, and technical issues.</p>
+        <div class="small text-secondary">We aim to reply within one business day for standard requests. See response targets below.</div>
+    </div>
+
+    </div>
+</section>
+
+<div class="container support my-4">
+    {# Flash alerts #} {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+    <div class="mb-3">
+        {% for category, msg in messages %}
+        <div class="alert alert-{{ 'success' if category=='success' else ('danger' if category in ['danger','error'] else ('warning' if category=='warning' else 'info')) }} alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+
+    <div id="contact" class="section mb-4">
+        <h2>Contact Support</h2>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-2">General Support</h5>
+                        <p class="mb-2">Account issues, tasks, proposals, reviews, refunds.</p>
+                        <a class="btn btn-primary" href="mailto:support@taskdesk.ug?subject=Support%20Request">Email support@taskdesk.ug</a>
+                        <div class="small text-secondary mt-2">Hours: Mon–Fri, 9:00–17:00 (EAT)</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title mb-2">Security Reports</h5>
+                        <p class="mb-2">Suspected account compromise, vulnerabilities, fraud.</p>
+                        <a class="btn btn-outline-primary" href="mailto:support@taskdesk.ug?subject=Security%20Report">Email support@taskdesk.ug</a>
+                        <div class="small text-secondary mt-2">We prioritize security incidents. See <a href="#sla">response targets</a>.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title mb-2">Send us a message</h5>
+                <form class="needs-validation" method="post" action="{{ url_for('main.support_new') }}" enctype="multipart/form-data" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Name</label>
+                            <input type="text" name="name" class="form-control" required maxlength="120" />
+                            <div class="invalid-feedback">Your name is required.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" required maxlength="255" />
+                            <div class="invalid-feedback">A valid email is required.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category" required>
+                <option value="">Choose…</option>
+                <option>Account</option>
+                <option>Payments & Payouts</option>
+                <option>Tasks & Milestones</option>
+                <option>Verification (KYC)</option>
+                <option>Security</option>
+                <option>Other</option>
+              </select>
+                            <div class="invalid-feedback">Please select a category.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Message</label>
+                            <textarea name="message" class="form-control" rows="5" required minlength="10" maxlength="5000" placeholder="Describe the issue, steps to reproduce, expected vs actual, and any IDs or references."></textarea>
+                            <div class="invalid-feedback">Please enter at least 10 characters.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Attachments (optional)</label>
+                            <input type="file" name="attachments" class="form-control" multiple accept="image/*,application/pdf,video/mp4,text/plain,application/zip,application/x-zip-compressed" />
+                            <div class="form-text">Up to 5 files, max 10MB each. Screenshots or short clips help.</div>
+                        </div>
+                        <div class="col-12" style="display:none">
+                            <label>Leave this empty</label>
+                            <input type="text" name="website" class="form-control" autocomplete="off" />
+                        </div>
+                        <div class="col-12 d-flex gap-2">
+                            <button class="btn btn-primary" type="submit">Submit Ticket</button>
+                            <span class="text-secondary small align-self-center">A ticket number will be emailed to you.</span>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# My Tickets preview #}
+    <div id="mytickets" class="section mb-4">
+        {% if current_user.is_authenticated and tickets is defined %}
+        <h2>My Tickets</h2>
+        {% if tickets %}
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in tickets %}
+                    <tr>
+                        <td class="text-muted">#{{ t.ticket_id }}</td>
+                        <td>{{ t.category }}</td>
+                        <td><span class="badge bg-{{ 'success' if t.status=='closed' else ('warning' if t.status=='pending' else 'primary') }}">{{ t.status }}</span></td>
+                        <td>{{ t.created_at }}</td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('main.support_my') }}"><i class="bi bi-chat-dots"></i> Chat</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">You have no tickets yet.</p>
+        {% endif %} {% endif %}
+    </div>
+
+    <div id="status" class="section mb-4">
+        <h2>Service Status</h2>
+        <p>Check real‑time availability and scheduled maintenance on our status page.</p>
+        <a class="btn btn-light border" href="/status" target="_blank" rel="noopener">/status</a>
+    </div>
+
+    <div id="troubleshoot" class="section mb-4">
+        <h2>Troubleshooting</h2>
+        <div class="accordion" id="troubleAcc">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="t1"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c1">I can’t sign in</button></h2>
+                <div id="c1" class="accordion-collapse collapse show" data-bs-parent="#troubleAcc">
+                    <div class="accordion-body">
+                        <ol>
+                            <li>Use the correct email/username. Reset your password from the sign‑in page.</li>
+                            <li>Check your inbox/spam for the verification or reset link.</li>
+                            <li>If you use 2FA, ensure your device time is accurate and codes are generated for the correct account.</li>
+                            <li>Still stuck? Email <a href="mailto:support@taskdesk.ug">support@taskdesk.ug</a> from your registered address.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="t2"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2">My payment failed</button></h2>
+                <div id="c2" class="accordion-collapse collapse" data-bs-parent="#troubleAcc">
+                    <div class="accordion-body">
+                        <ul>
+                            <li>Confirm sufficient balance or card/mobile money limits.</li>
+                            <li>Try another method (card, MoMo, bank) if available.</li>
+                            <li>Ensure billing address matches your payment method.</li>
+                            <li>If you were charged but task didn’t update, contact support with the <strong>transaction reference</strong> and time.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="t3"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c3">File upload or chat not working</button></h2>
+                <div id="c3" class="accordion-collapse collapse" data-bs-parent="#troubleAcc">
+                    <div class="accordion-body">
+                        <ul>
+                            <li>Refresh the page and try a different browser (Chrome/Edge/Firefox).</li>
+                            <li>Disable aggressive ad‑blockers or allow taskdesk in extensions.</li>
+                            <li>Ensure files meet size/type limits shown in the uploader.</li>
+                            <li>Attach browser console logs if the issue persists (see below).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="payments" class="section mb-4">
+        <h2>Payments & Payouts Help</h2>
+        <p>All payments should be completed <em>on‑platform</em>. Never send money directly to another user. For failed charges, duplicate charges, or payout delays, include your task ID, milestone ID, and transaction reference.</p>
+        <ul>
+            <li>Refunds follow our Terms (see <a href="/terms#disputes">Disputes & Refunds</a>).</li>
+            <li>Payouts may require KYC and can take 1–3 business days after approval depending on your method.</li>
+        </ul>
+    </div>
+
+    <div id="kyc" class="section mb-4">
+        <h2>Identity & Verification (KYC)</h2>
+        <p>Verification helps us keep the marketplace safe and enable payouts. We may request a government ID, selfie match, and proof of address. Data is handled per our <a href="/privacy">Privacy Policy</a>.</p>
+    </div>
+
+    <div id="security" class="section mb-4">
+        <h2>Security & Account Safety</h2>
+        <ul>
+            <li>Enable two‑factor authentication for your account.</li>
+            <li>Use unique, strong passwords; do not share credentials.</li>
+            <li>Beware of off‑platform payment requests and unusual links.</li>
+            <li>Report suspicious activity to <a href="mailto:support@taskdesk.ug">support@taskdesk.ug</a>.</li>
+        </ul>
+    </div>
+
+    <div id="faq" class="section mb-4">
+        <h2>FAQs</h2>
+        <div class="accordion" id="faqAcc">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="f1"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#fc1">How do milestones work?</button></h2>
+                <div id="fc1" class="accordion-collapse collapse show" data-bs-parent="#faqAcc">
+                    <div class="accordion-body">Clients can fund a milestone and approve once the deliverable meets acceptance criteria. Funds are released to the Freelancer on approval or after a resolution process if a dispute arises.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="f2"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fc2">Can I get a refund?</button></h2>
+                <div id="fc2" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+                    <div class="accordion-body">Refunds are discretionary under the Terms. If no work started and you cancel promptly, or in clear breach, we may refund. See <a href="/terms#disputes">Terms §12</a>.</div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="f3"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#fc3">Who owns the work?</button></h2>
+                <div id="fc3" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+                    <div class="accordion-body">Ownership of Deliverables transfers to the Client upon full payment, excluding pre‑existing Freelancer Tools (licensed as needed). See <a href="/terms#deliverables">Terms §6</a>.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="guides" class="section mb-4">
+        <h2>How to File a Great Support Ticket</h2>
+        <p>Including the details below helps us resolve your issue faster:</p>
+        <ol>
+            <li><strong>Summary:</strong> one‑line description of the problem.</li>
+            <li><strong>Steps to reproduce:</strong> numbered steps from login to the error.</li>
+            <li><strong>Expected vs. actual:</strong> what you expected to happen vs. what occurred.</li>
+            <li><strong>Screenshots or video:</strong> include timestamps and visible URLs if possible.</li>
+            <li><strong>Technical details:</strong> browser + version, OS, approximate time, task/milestone IDs, transaction ref.</li>
+            <li><strong>Logs (optional):</strong> copy any visible error message. To capture browser console logs, press <kbd>F12</kbd> and copy from the Console tab.</li>
+        </ol>
+    </div>
+
+    <div id="sla" class="section mb-4">
+        <h2>Priority & Response Targets</h2>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>Priority</th>
+                        <th>Example</th>
+                        <th>Target First Response</th>
+                        <th>Target Resolution</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge text-bg-danger">P1 — Critical</span></td>
+                        <td>Platform outage; security incident; payment double‑charge</td>
+                        <td>4 business hours</td>
+                        <td>1 business day (workaround) </td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge text-bg-warning">P2 — High</span></td>
+                        <td>Account lockout; milestone payout stuck; file uploads failing</td>
+                        <td>8 business hours</td>
+                        <td>2–3 business days</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge text-bg-info">P3 — Normal</span></td>
+                        <td>Minor bugs; UI issues; general questions</td>
+                        <td>1 business day</td>
+                        <td>3–5 business days</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="small text-secondary">Targets are not SLAs unless specified in a paid support plan.</p>
+    </div>
+
+    <div id="policies" class="section mb-5">
+        <h2>Key Policies</h2>
+        <ul class="kb-list">
+            <li><a href="/terms">Terms of Service</a></li>
+            <li><a href="/privacy">Privacy Policy</a></li>
+            <li>Acceptable Use (see <a href="/terms#acceptable">Terms §10</a>)</li>
+            <li>Disputes & Refunds (see <a href="/terms#disputes">Terms §12</a>)</li>
+        </ul>
+    </div>
+    <script>
+        (() => {
+            'use strict';
+            const form = document.querySelector('form.needs-validation');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    const files = form.querySelector('input[type=file]').files;
+                    if (files && files.length > 5) {
+                        e.preventDefault();
+                        alert('Please attach at most 5 files.');
+                        return;
+                    }
+                    for (const f of files) {
+                        if (f.size > 10 * 1024 * 1024) {
+                            e.preventDefault();
+                            alert('Each file must be under 10MB.');
+                            return;
+                        }
+                    }
+                    const honey = form.querySelector('input[name=website]');
+                    if (honey && honey.value) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (!form.checkValidity()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                });
+            }
+        })();
+    </script>
+</div>
+</div>
+</div>
+{% endblock %}

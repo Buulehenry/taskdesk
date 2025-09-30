@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <title>{% block subject %}TaskDesk{% endblock %}</title>
+        <style>
+            body {
+                background: #f6f8fb;
+                margin: 0;
+                padding: 24px;
+                font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+                color: #1f2937;
+            }
+            
+            .container {
+                max-width: 640px;
+                margin: 0 auto;
+                background: #fff;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
+            }
+            
+            .header {
+                padding: 20px 24px;
+                border-bottom: 1px solid #eee;
+            }
+            
+            .brand-link {
+                text-decoration: none;
+                display: inline-block;
+            }
+            
+            .brand-logo {
+                display: block;
+                height: 28px;
+                /* adjust as needed */
+                width: auto;
+                border: 0;
+                outline: none;
+            }
+            
+            .content {
+                padding: 24px;
+                line-height: 1.6;
+            }
+            
+            .btn {
+                display: inline-block;
+                padding: 12px 16px;
+                border-radius: 8px;
+                text-decoration: none;
+                background: #0d6efd;
+                color: #fff !important;
+            }
+            
+            .muted {
+                color: #6b7280;
+                font-size: 12px;
+            }
+            
+            .footer {
+                padding: 16px 24px;
+                border-top: 1px solid #eee;
+                color: #6b7280;
+                font-size: 12px;
+            }
+            
+            a {
+                color: #0d6efd;
+            }
+            /* Fallback text link shown if images are blocked */
+            
+            .brand-fallback {
+                display: none;
+                font-weight: 700;
+                font-size: 18px;
+                color: #111827 !important;
+                text-decoration: none;
+            }
+            /* Many email clients hide blocked images; keep graceful */
+            
+            .no-img .brand-fallback {
+                display: inline;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <div class="header">
+                <a class="brand-link" href="{{ url_for('index', _external=True) }}">
+                    <!-- Logo image -->
+                    <img class="brand-logo" src="{{ 'cid:' ~ logo_cid if logo_cid else url_for('static', filename='img/logo.png', _external=True) }}" alt="TaskDesk" height="28">
+
+                    <!-- Fallback brand text (if images are blocked) -->
+                    <span class="brand-fallback">TaskDesk</span>
+                </a>
+            </div>
+
+            <div class="content">
+                {% block body %}{% endblock %}
+            </div>
+
+            <div class="footer">
+                You’re receiving this email because you have a TaskDesk account.
+                <br>© {{ (now().year if now is defined else 2025) }} TaskDesk. All rights reserved.
+            </div>
+        </div>
+    </body>
+
+</html>

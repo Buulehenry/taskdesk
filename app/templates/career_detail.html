@@ -1,0 +1,35 @@
+{% extends "base.html" %} {% set title = (job.title ~ " — Careers") %} {% block content %}
+<section class="py-4">
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <h1 class="mb-1">{{ job.title }}</h1>
+            <div class="text-muted mb-3">
+                {{ job.department or 'General' }} • {{ job.employment_type or '—' }} • {{ job.location or '—' }}
+            </div>
+            <article class="prose">
+                {{ job.description_md | safe }}
+            </article>
+        </div>
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Apply now</h5>
+                    <form method="post" action="{{ url_for('main.career_apply', job_id=job.id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-2"><input class="form-control" name="name" placeholder="Full name" required></div>
+                        <div class="mb-2"><input class="form-control" name="email" type="email" placeholder="Email" required></div>
+                        <div class="mb-2"><input class="form-control" name="phone" placeholder="Phone (optional)"></div>
+                        <div class="mb-2"><textarea class="form-control" name="cover_letter" rows="4" placeholder="Cover letter (optional)"></textarea></div>
+                        <div class="mb-3">
+                            <label class="form-label">Resume (PDF/DOC/DOCX)</label>
+                            <input class="form-control" type="file" name="resume" accept=".pdf,.doc,.docx">
+                        </div>
+                        <button class="btn btn-primary w-100" {{ 'disabled' if not job.is_active }}>Submit application</button> {% if not job.is_active %}
+                        <div class="small text-muted mt-2">This role is closed.</div>{% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

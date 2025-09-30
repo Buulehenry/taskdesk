@@ -1,0 +1,177 @@
+{% extends 'base.html' %} {% block content %} {# Freelancer → KYC (Identity Verification) Server expectations (see freelancer.kyc route): - GET shows current status and form - POST accepts: doc_type, country, id_number, files: kyc_id_front, kyc_id_back,
+kyc_selfie - After POST, flash + redirect back to profile or this page Current user fields referenced: current_user.kyc_status #}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+    <div>
+        <h3 class="mb-0">Identity Verification</h3>
+        <div class="small text-muted">Submit your government ID to unlock assignments and payouts.</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        {% if current_user.kyc_status == 'approved' %}
+        <span class="badge bg-success">Approved</span> {% elif current_user.kyc_status == 'submitted' %}
+        <span class="badge bg-warning text-dark">In review</span> {% elif current_user.kyc_status == 'rejected' %}
+        <span class="badge bg-danger">Rejected</span> {% else %}
+        <span class="badge bg-light text-dark">Unverified</span> {% endif %}
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('freelancer.profile') }}">Back to profile</a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main: KYC form -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <strong>Verify your identity</strong>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Stepper visual -->
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="d-flex align-items-center">
+                            <span class="badge rounded-pill bg-primary">1</span>
+                            <span class="ms-2 me-3 small text-muted">Details</span>
+                        </div>
+                        <div class="flex-grow-1 border-top mx-2"></div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge rounded-pill bg-primary">2</span>
+                            <span class="ms-2 me-3 small text-muted">Upload</span>
+                        </div>
+                        <div class="flex-grow-1 border-top mx-2"></div>
+                        <div class="d-flex align-items-center">
+                            <span class="badge rounded-pill bg-primary">3</span>
+                            <span class="ms-2 small text-muted">Submit</span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Document type <span class="text-danger">*</span></label>
+                            <select name="doc_type" class="form-select" required>
+                <option value="">Choose…</option>
+                <option value="national_id">National ID</option>
+                <option value="passport">Passport</option>
+                <option value="driver_license">Driver's License</option>
+              </select>
+                            <div class="invalid-feedback">Select a document type.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Issuing country <span class="text-danger">*</span></label>
+                            <input name="country" class="form-control" placeholder="e.g., Uganda" required>
+                            <div class="invalid-feedback">Enter the issuing country.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">ID number <span class="text-danger">*</span></label>
+                            <input name="id_number" class="form-control" placeholder="Exact as on the document" required>
+                            <div class="invalid-feedback">Enter the number on your ID.</div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Front of ID <span class="text-danger">*</span></label>
+                            <input class="form-control" type="file" accept="image/*,application/pdf" name="kyc_id_front" id="idFront" required>
+                            <div class="form-text">Clear, readable image or PDF.</div>
+                            <div class="ratio ratio-16x9 mt-2 d-none" id="prevFrontWrap"><img id="prevFront" class="w-100 h-100 object-fit-contain border rounded" alt="Preview front"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Back of ID</label>
+                            <input class="form-control" type="file" accept="image/*,application/pdf" name="kyc_id_back" id="idBack">
+                            <div class="form-text">If your document has a back side.</div>
+                            <div class="ratio ratio-16x9 mt-2 d-none" id="prevBackWrap"><img id="prevBack" class="w-100 h-100 object-fit-contain border rounded" alt="Preview back"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Selfie holding ID <span class="text-danger">*</span></label>
+                            <input class="form-control" type="file" accept="image/*" name="kyc_selfie" id="idSelfie" required>
+                            <div class="form-text">Hold the ID next to your face. Good lighting, no filters.</div>
+                            <div class="ratio ratio-16x9 mt-2 d-none" id="prevSelfieWrap"><img id="prevSelfie" class="w-100 h-100 object-fit-contain border rounded" alt="Preview selfie"></div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mt-4 small" role="alert">
+                        <strong>Privacy:</strong> Your documents are encrypted at rest. Only authorized reviewers can access them. We delete KYC images after verification unless law requires retention.
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button class="btn btn-primary">Submit for review</button>
+                        <a class="btn btn-outline-secondary" href="{{ url_for('freelancer.profile') }}">Cancel</a>
+                    </div>
+
+                    {% if message %}
+                    <div class="alert alert-info mt-3" role="alert">{{ message }}</div>
+                    {% endif %} {% if error %}
+                    <div class="alert alert-danger mt-3" role="alert">{{ error }}</div>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar: tips and requirements -->
+    <div class="col-lg-4">
+        <div class="position-sticky" style="top:1rem;">
+            <div class="card mb-3">
+                <div class="card-header"><strong>Photo requirements</strong></div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li>High-resolution, color images (no scans of photocopies).</li>
+                        <li>All edges visible, no glare, no blur.</li>
+                        <li>Name, number, and date of birth must be readable.</li>
+                        <li>Selfie: face and ID in frame, text facing camera.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><strong>What happens next?</strong></div>
+                <div class="card-body small">
+                    <ol class="mb-0">
+                        <li>We review within 1–2 business days.</li>
+                        <li>You’ll receive an email with the result.</li>
+                        <li>Approved freelancers can accept assignments and receive payouts.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const form = document.querySelector('form.needs-validation');
+        form && form.addEventListener('submit', (e) => {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+
+        function preview(input, imgId, wrapId) {
+            const file = input.files && input.files[0];
+            const img = document.getElementById(imgId);
+            const wrap = document.getElementById(wrapId);
+            if (!file || !img || !wrap) return;
+            if (!file.type.startsWith('image/')) {
+                wrap.classList.add('d-none');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = e => {
+                img.src = e.target.result;
+                wrap.classList.remove('d-none');
+            };
+            reader.readAsDataURL(file);
+        }
+        const idFront = document.getElementById('idFront');
+        const idBack = document.getElementById('idBack');
+        const idSelfie = document.getElementById('idSelfie');
+        idFront && idFront.addEventListener('change', () => preview(idFront, 'prevFront', 'prevFrontWrap'));
+        idBack && idBack.addEventListener('change', () => preview(idBack, 'prevBack', 'prevBackWrap'));
+        idSelfie && idSelfie.addEventListener('change', () => preview(idSelfie, 'prevSelfie', 'prevSelfieWrap'));
+    })();
+</script>
+
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "email/_base_email.html" %} {% block subject %}Review meeting canceled — Task #{{ task.id }}{% endblock %} {% block body %}
+<p>Hi {{ task.client.name if task.client and task.client.name else 'there' }},</p>
+
+<p>The review meeting for <strong>Task #{{ task.id }}</strong> — <em>{{ task.title }}</em> has been canceled.</p>
+
+{% if meeting.notes %}
+<p><strong>Note:</strong> {{ meeting.notes }}</p>
+{% endif %} {% if task_link %}
+<p><a class="btn" href="{{ task_link }}">View task</a></p>
+{% endif %}
+
+<p>We’ll reach out with a new time. If you prefer, reply to this email with your availability.</p>
+{% endblock %}

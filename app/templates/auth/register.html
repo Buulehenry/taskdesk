@@ -1,0 +1,194 @@
+{% extends 'base.html' %} {% block content %} {# Registration page (WTForms) Expects: form=RegisterForm Server: POST creates a User, validates unique email, creates profile, redirects to login #}
+
+<div class="row g-4 align-items-stretch">
+    <!-- Form -->
+    <div class="col-lg-7 col-xl-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="mb-0">Create your account</h3>
+                    <div class="small text-muted">Join TaskDesk to submit tasks and track progress.</div>
+                </div>
+                <a class="small" href="{{ url_for('auth.login') }}">Have an account? Sign in</a>
+            </div>
+            <div class="card-body">
+                <form method="POST" class="needs-validation" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label" for="name">Full name <span class="text-danger">*</span></label> {{ form.name(class_='form-control', id='name', placeholder='Jane Doe', required=True, maxlength=120) }} {% for e in form.name.errors
+                            %}
+                            <div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="phone">Phone (optional)</label> {{ form.phone(class_='form-control', id='phone', placeholder='+256 7xx xxx xxx') }} {% for e in form.phone.errors %}
+                            <div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label" for="email">Work email <span class="text-danger">*</span></label> {{ form.email(class_='form-control', id='email', type='email', placeholder='you@email.com', required=True, maxlength=255) }}
+                            <div class="invalid-feedback">Enter a valid email.</div>
+                            {% for e in form.email.errors %}
+                            <div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label" for="password">Password <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                {{ form.password(class_='form-control', id='pw', minlength=8, required=True, aria_describedby='pwHelp') }}
+                                <button class="btn btn-outline-secondary" type="button" id="pwToggle" tabindex="-1">Show</button>
+                            </div>
+                            <div id="pwHelp" class="form-text">Use at least 8 characters. Mix letters and numbers.</div>
+                            <div class="progress progress-sm mt-2">
+                                <div id="pwBar" class="progress-bar" style="width: 0%"></div>
+                            </div>
+                            <div id="pwMsg" class="small text-muted mt-1">Strength: —</div>
+                            {% for e in form.password.errors %}
+                            <div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="pw2">Confirm password <span class="text-danger">*</span></label> {{ form.password2(class_='form-control', id='pw2', required=True) }}
+                            <div class="invalid-feedback">Passwords must match.</div>
+                            {% for e in form.password2.errors %}
+                            <div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label" for="role">Account type</label> {{ form.role(class_='form-select', id='role') }}
+                        </div>
+                    </div>
+
+                    <div class="form-check mt-3">
+                        <input class="form-check-input" type="checkbox" value="1" id="terms" required>
+                        <label class="form-check-label" for="terms">I agree to the <a href="#">Terms</a> and <a href="#">Privacy Policy</a>.</label>
+                        <div class="invalid-feedback">You must accept the terms.</div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button class="btn btn-primary" type="submit">Create account</button>
+                        <a class="btn btn-outline-secondary" href="/">Cancel</a>
+                    </div>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %}
+                    <div class="mt-3">
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }}" role="alert">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %} {% endwith %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-5 col-xl-4">
+        <div class="position-sticky" style="top: 1rem;">
+            <div class="card mb-3">
+                <div class="card-header"><strong>Why TaskDesk</strong></div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li>Submit tasks in minutes.</li>
+                        <li>Clear quotes: pay now or on delivery.</li>
+                        <li>Vetted experts, NDA by default.</li>
+                        <li>Track progress and files in one place.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><strong>Want to work with us?</strong></div>
+                <div class="card-body small">
+                    <div class="mb-2">Apply as a freelancer and join our vetted network.</div>
+                    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('auth.register', role='freelancer') }}">Apply as freelancer</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // Preselect role from querystring if present
+        const params = new URLSearchParams(window.location.search);
+        const role = params.get('role');
+        if (role) {
+            const sel = document.getElementById('role');
+            if (sel) sel.value = role;
+        }
+
+        // Toggle password visibility
+        const pw = document.getElementById('pw');
+        const pw2 = document.getElementById('pw2');
+        const btn = document.getElementById('pwToggle');
+        btn && btn.addEventListener('click', () => {
+            const t = pw.getAttribute('type') === 'password' ? 'text' : 'password';
+            pw.setAttribute('type', t);
+            pw2.setAttribute('type', t);
+            btn.textContent = (t === 'password') ? 'Show' : 'Hide';
+        });
+
+        // Simple strength meter
+        const bar = document.getElementById('pwBar');
+        const msg = document.getElementById('pwMsg');
+
+        function score(s) {
+            let p = 0;
+            if (!s) return 0;
+            const len = s.length;
+            if (len >= 8) p += 25;
+            if (len >= 12) p += 10;
+            if (/[a-z]/.test(s)) p += 15;
+            if (/[A-Z]/.test(s)) p += 15;
+            if (/[0-9]/.test(s)) p += 15;
+            if (/[^A-Za-z0-9]/.test(s)) p += 20;
+            return Math.min(p, 100);
+        }
+
+        function color(p) {
+            if (p < 30) return 'bg-danger';
+            if (p < 60) return 'bg-warning';
+            if (p < 85) return 'bg-info';
+            return 'bg-success';
+        }
+
+        function label(p) {
+            if (p < 30) return 'Weak';
+            if (p < 60) return 'Okay';
+            if (p < 85) return 'Good';
+            return 'Strong';
+        }
+
+        function update() {
+            const v = pw.value || '';
+            const p = score(v);
+            bar.style.width = p + '%';
+            bar.className = 'progress-bar ' + color(p);
+            msg.textContent = 'Strength: ' + label(p);
+        }
+        pw && pw.addEventListener('input', update);
+        update();
+
+        // Bootstrap validation + match check
+        const form = document.querySelector('form.needs-validation');
+        form && form.addEventListener('submit', (e) => {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            if (pw && pw2 && pw.value !== pw2.value) {
+                e.preventDefault();
+                e.stopPropagation();
+                document.getElementById('pw2').setCustomValidity('Mismatch');
+            } else {
+                document.getElementById('pw2').setCustomValidity('');
+            }
+            form.classList.add('was-validated');
+        });
+    })();
+</script>
+
+{% endblock %}

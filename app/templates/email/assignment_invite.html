@@ -1,0 +1,13 @@
+{% extends "email/_base_email.html" %} {% block subject %}New Task Assignment — Task #{{ task.id }}{% endblock %} {% block body %}
+<h2 style="margin-top:0">You’ve been invited to an assignment</h2>
+<p>Hi {{ assignment.assignee.name }},</p>
+<p>You’ve been assigned <strong>Task #{{ task.id }}</strong> — <em>{{ task.title }}</em>.</p>
+{% if assignment.accept_expires_at %}
+<p><strong>Accept by:</strong> {{ assignment.accept_expires_at }}</p>
+{% endif %}
+<p>
+    <a class="btn" href="{{ url_for('freelancer.assignment_accept', assignment_id=assignment.id, _external=True) }}">Accept</a> &nbsp;&nbsp;
+    <a href="{{ url_for('freelancer.assignment_decline', assignment_id=assignment.id, _external=True) }}">Decline</a>
+</p>
+<p class="muted">You can also review this in your Freelancer dashboard.</p>
+{% endblock %}

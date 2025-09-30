@@ -1,0 +1,21 @@
+{% extends "email/_base_email.html" %} {% block subject %}Review meeting scheduled — Task #{{ task.id }}{% endblock %} {% block body %}
+<p>Hi {{ task.client.name if task.client and task.client.name else 'there' }},</p>
+
+<p>Your review meeting for <strong>Task #{{ task.id }}</strong> — <em>{{ task.title }}</em> has been scheduled.</p>
+
+<div style="padding:12px 14px;border:1px solid #eee;border-radius:10px;background:#f9fafb;margin:12px 0;">
+    <div><strong>When:</strong> {{ meeting.scheduled_for }} ({{ meeting.duration_minutes or 30 }} mins)</div>
+    <div><strong>Provider:</strong> {{ (meeting.provider or 'internal')|replace('_',' ')|title }}</div>
+    {% if meeting.join_url %}
+    <div><strong>Join link:</strong> <a href="{{ meeting.join_url }}">{{ meeting.join_url }}</a></div>
+    {% endif %} {% if meeting.notes %}
+    <div><strong>Notes:</strong> {{ meeting.notes }}</div>
+    {% endif %}
+</div>
+
+{% if task_link %}
+<p><a class="btn" href="{{ task_link }}">View task</a></p>
+{% endif %}
+
+<p class="muted">We’ve attached a calendar invite (.ics) where supported.</p>
+{% endblock %}

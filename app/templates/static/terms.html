@@ -1,0 +1,272 @@
+{% extends 'base.html' %} {% set title = 'Terms of Service — TaskDesk' %} {% block extra_css %}
+<style>
+    .legal-hero {
+        background: var(--bs-body-bg);
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+    
+    .legal-hero .lead {
+        color: var(--bs-secondary-color)
+    }
+    
+    .toc ol {
+        columns: 2;
+        column-gap: 1.25rem
+    }
+    
+    .toc a {
+        text-decoration: none
+    }
+    
+    .legal .card {
+        border: 1px solid var(--bs-border-color);
+        border-radius: .75rem
+    }
+    
+    .legal .section h2 {
+        scroll-margin-top: 6rem
+    }
+    
+    .note {
+        border-left: 3px solid var(--bs-primary);
+        padding: .75rem 1rem;
+        background: rgba(13, 110, 253, .05);
+        border-radius: .5rem
+    }
+    
+    @media print {
+        .navbar,
+        .footer,
+        .toast-container {
+            display: none!important
+        }
+        .container {
+            max-width: 100%!important
+        }
+        a[href]:after {
+            content: " (" attr(href) ")";
+            font-size: .9em;
+            color: #666
+        }
+        body {
+            font-size: 12pt
+        }
+    }
+</style>
+{% endblock %} {% block content %}
+<section class="legal-hero py-4">
+    <div class="container">
+        <h1 class="mb-1">TaskDesk — Terms of Service</h1>
+        <p class="lead mb-0">Contract between you and TaskDesk governing your use of our marketplace and software.</p>
+        <div class="small text-secondary">Effective: <span class="fw-semibold">28 September 2025</span> · Last updated: <span class="fw-semibold">28 September 2025</span></div>
+    </div>
+</section>
+
+<div class="container legal my-4">
+    <div class="row g-4">
+        <div class="col-12 col-lg-3 order-lg-2">
+            <div class="card p-3 sticky-lg-top" style="top:6rem">
+                <div class="fw-semibold mb-2">Contents</div>
+                <nav class="toc small">
+                    <ol class="ps-3">
+                        <li><a href="#acceptance">Acceptance</a></li>
+                        <li><a href="#roles">About TaskDesk & Roles</a></li>
+                        <li><a href="#accounts">Accounts & Verification</a></li>
+                        <li><a href="#marketplace">Marketplace Rules</a></li>
+                        <li><a href="#payments">Payments, Fees & Taxes</a></li>
+                        <li><a href="#deliverables">Deliverables, IP & Licensing</a></li>
+                        <li><a href="#reviews">Ratings & Reviews</a></li>
+                        <li><a href="#content">User Content & Moderation</a></li>
+                        <li><a href="#security">Security & Data Protection</a></li>
+                        <li><a href="#acceptable">Acceptable Use</a></li>
+                        <li><a href="#ai">AI-Assisted Features</a></li>
+                        <li><a href="#disputes">Disputes, Refunds & Chargebacks</a></li>
+                        <li><a href="#compliance">Compliance, KYC/AML & Sanctions</a></li>
+                        <li><a href="#warranties">Disclaimers & Limits of Liability</a></li>
+                        <li><a href="#termination">Suspension & Termination</a></li>
+                        <li><a href="#changes">Changes to the Service or Terms</a></li>
+                        <li><a href="#law">Governing Law & Arbitration</a></li>
+                        <li><a href="#misc">Miscellaneous</a></li>
+                        <li><a href="#definitions">Key Definitions</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-9">
+            <div class="note mb-3"><strong>Plain-English summary (not a substitute for the full terms):</strong> TaskDesk is a marketplace and workflow tool that connects Clients with Freelancers and enables task posting, offers, milestones, messaging and payments. TaskDesk
+                is not an employer of Freelancers. Pay through TaskDesk only. Read how ownership of Deliverables transfers after full payment, how refunds and disputes work, and how we limit liability. Uganda law governs; arbitration seated in Kampala.</div>
+
+            <div id="acceptance" class="section mb-4">
+                <h2>1) Acceptance</h2>
+                <p>These Terms of Service (the <em>“Terms”</em>) form a legally binding agreement between you and TaskDesk regarding your access to and use of TaskDesk’s websites, apps, APIs and marketplace (collectively, the <em>“Service”</em>). By creating
+                    an account or using the Service, you agree to these Terms and to our Privacy Notice. If you are accepting these Terms for an organization, you represent that you have authority to bind that organization and “you” refers to it.</p>
+                <p>If you do not agree, do not use the Service.</p>
+            </div>
+
+            <div id="roles" class="section mb-4">
+                <h2>2) About TaskDesk & Roles</h2>
+                <p>TaskDesk provides a platform where registered users can post tasks, receive/submit proposals, contract, collaborate and pay for services. Unless expressly stated in a separate signed agreement, TaskDesk does not control how Freelancers
+                    perform work, does not supervise or direct their services, and is not an employer, joint employer, or manager of Freelancers.</p>
+                <ul>
+                    <li><strong>Client</strong>: a user who posts a task, milestone or project and purchases services.</li>
+                    <li><strong>Freelancer</strong>: a user who offers and performs services and delivers Deliverables.</li>
+                    <li><strong>Task</strong>: a scoped piece of work described by a Client; may be broken into <strong>Milestones</strong>.</li>
+                </ul>
+                <p>Except where TaskDesk explicitly acts as a limited payments agent (Section 5), all contracts for services are directly between Clients and Freelancers (<em>“User Contracts”</em>).</p>
+            </div>
+
+            <div id="accounts" class="section mb-4">
+                <h2>3) Accounts & Verification</h2>
+                <h6>3.1 Eligibility</h6>
+                <p>You must be at least 18 or the age of majority in your jurisdiction. Creating an account constitutes a representation that you are legally capable of entering contracts.</p>
+                <h6>3.2 Registration</h6>
+                <p>Provide accurate information and keep it updated. You are responsible for safeguarding credentials and for activity under your account. Enable multi‑factor authentication where available.</p>
+                <h6>3.3 Verification & KYC</h6>
+                <p>We may require identity, payment, address or business verification to reduce fraud, ensure compliance, enable withdrawals and raise trust. Failure to complete verification may limit access or lead to suspension.</p>
+            </div>
+
+            <div id="marketplace" class="section mb-4">
+                <h2>4) Marketplace Rules</h2>
+                <h6>4.1 Scoping & Proposals</h6>
+                <p>Clients should provide clear task descriptions, acceptance criteria, timelines and budgets. Freelancers must submit truthful proposals and disclose material assumptions, dependencies and exclusions.</p>
+                <h6>4.2 Messaging & Off‑Platform Contact</h6>
+                <p>Use TaskDesk messaging for pre‑contract communications. Sharing direct contact info or moving payments off‑platform to avoid fees is prohibited (<em>non‑circumvention</em>).</p>
+                <h6>4.3 Milestones & Acceptance</h6>
+                <p>Clients are encouraged to break work into milestones with acceptance tests. Client has a reasonable review window after each submission to request changes or accept deliverables.</p>
+                <h6>4.4 Non‑circumvention</h6>
+                <p>For 24 months after first contact via TaskDesk, you agree not to circumvent TaskDesk to contract or pay the other party for substantially similar work without TaskDesk’s written consent or the applicable buy‑out fee.</p>
+            </div>
+
+            <div id="payments" class="section mb-4">
+                <h2>5) Payments, Fees & Taxes</h2>
+                <h6>5.1 Payments Through TaskDesk</h6>
+                <p>All payments must be processed through TaskDesk using supported methods (e.g., Pesapal, Visa, Mastercard, and where available, mobile money). TaskDesk (or its payment partners) may act as limited payment collection agent for the Freelancer
+                    solely to accept funds from the Client and remit to the Freelancer.</p>
+                <h6>5.2 Fees</h6>
+                <p>TaskDesk may charge service fees to Clients and/or Freelancers, shown at checkout or in product. Fees are subject to change prospectively.</p>
+                <h6>5.3 Currency & Exchange</h6>
+                <p>Prices may be displayed in UGX or other currencies. Your provider handles conversion; you are responsible for any FX charges.</p>
+                <h6>5.4 Taxes</h6>
+                <p>Freelancers are responsible for assessing and remitting taxes arising from their earnings. TaskDesk does not withhold taxes unless required by law.</p>
+                <h6>5.5 Withholding & Offsets</h6>
+                <p>We may withhold or offset amounts if we believe transactions are fraudulent, violate law or these Terms, or are subject to chargeback or refund.</p>
+            </div>
+
+            <div id="deliverables" class="section mb-4">
+                <h2>6) Deliverables, IP & Licensing</h2>
+                <h6>6.1 Ownership Transfer</h6>
+                <p>Unless the parties agree otherwise in writing: upon full payment of all amounts due for a Task or Milestone, the Freelancer assigns to the Client all right, title and interest in the Deliverables (excluding Freelancer Tools defined below).
+                    Before payment, Freelancer grants Client a limited, revocable license to review solely for acceptance testing.</p>
+                <h6>6.2 Freelancer Tools</h6>
+                <p>Freelancer retains ownership of pre‑existing materials, know‑how, methods, code libraries, and tools used to create Deliverables (<em>“Freelancer Tools”</em>). Freelancer grants Client a perpetual, worldwide, royalty‑free license to use
+                    Freelancer Tools embedded in Deliverables to the extent necessary to use the Deliverables.</p>
+                <h6>6.3 Third‑Party Components</h6>
+                <p>Deliverables may include third‑party components (e.g., open‑source libraries, stock assets) subject to their licenses, which will control in case of conflict.</p>
+                <h6>6.4 Moral Rights & Portfolio Use</h6>
+                <p>Freelancer waives or agrees not to enforce moral rights to the extent permitted by law and may reference non‑confidential Deliverables in a portfolio, unless the Client’s contract or NDA prohibits it.</p>
+            </div>
+
+            <div id="reviews" class="section mb-4">
+                <h2>7) Ratings & Reviews</h2>
+                <p>Users may leave factual, fair reviews. You may not post fake, misleading or retaliatory reviews. We may remove reviews that violate these Terms or our policies.</p>
+            </div>
+
+            <div id="content" class="section mb-4">
+                <h2>8) User Content & Moderation</h2>
+                <p>You are responsible for the content you post, including task descriptions, files and messages. Do not post unlawful, infringing, harmful, or confidential third‑party information without authorization. We may remove or restrict content
+                    that violates law or policy.</p>
+            </div>
+
+            <div id="security" class="section mb-4">
+                <h2>9) Security & Data Protection</h2>
+                <p>We implement reasonable administrative and technical safeguards. You remain responsible for securing your devices and maintaining backups of your materials. Our Privacy Notice explains how we collect and use personal data. For business
+                    customers, a Data Processing Addendum may apply when executed.</p>
+            </div>
+
+            <div id="acceptable" class="section mb-4">
+                <h2>10) Acceptable Use</h2>
+                <ul>
+                    <li>No illegal activity, IP infringement, harassment, or exploitation.</li>
+                    <li>No attempts to breach security, probe systems, or scrape beyond documented APIs.</li>
+                    <li>No spam, malware, or denial‑of‑service attacks.</li>
+                    <li>No high‑risk uses (e.g., medical diagnosis, life support, critical infrastructure) without a written safety agreement.</li>
+                    <li>No use intended to train a competing marketplace or model directly on user data or outputs without consent.</li>
+                </ul>
+            </div>
+
+            <div id="ai" class="section mb-4">
+                <h2>11) AI‑Assisted Features</h2>
+                <p>TaskDesk may provide AI features (e.g., draft briefs, proposal helpers, summaries). AI output may be inaccurate or biased. Use human review for important decisions. You are responsible for legal and ethical use of AI output.</p>
+            </div>
+
+            <div id="disputes" class="section mb-4">
+                <h2>12) Disputes, Refunds & Chargebacks</h2>
+                <h6>12.1 Good‑Faith Resolution</h6>
+                <p>Parties should attempt to resolve scope, quality or delivery issues via the messaging and milestone tools. Document changes in writing.</p>
+                <h6>12.2 Refund Requests</h6>
+                <p>Refunds are discretionary unless required by law. We may refund if (i) no work started after funding and Client cancels within a reasonable time; (ii) clear breach of scope by Freelancer and failure to cure; or (iii) fraud.</p>
+                <h6>12.3 Chargebacks</h6>
+                <p>Initiating a chargeback without first attempting resolution may lead to account limits or suspension. We will provide evidence to processors to contest invalid chargebacks.</p>
+            </div>
+
+            <div id="compliance" class="section mb-4">
+                <h2>13) Compliance, KYC/AML & Sanctions</h2>
+                <p>You must comply with applicable anti‑corruption, anti‑money‑laundering and sanctions laws. You represent that you are not a restricted party or located in a sanctioned jurisdiction. We may screen, block or refund transactions to comply
+                    with law.</p>
+            </div>
+
+            <div id="warranties" class="section mb-4">
+                <h2>14) Disclaimers & Limits of Liability</h2>
+                <h6>14.1 Disclaimers</h6>
+                <p>The Service is provided “as is” and “as available” without warranties of any kind, express or implied, including merchantability, fitness for a particular purpose, title and non‑infringement.</p>
+                <h6>14.2 Limitation of Liability</h6>
+                <p>To the maximum extent permitted by law, TaskDesk will not be liable for indirect, incidental, special, consequential or punitive damages, or lost profits, revenues, data, goodwill or business interruption. TaskDesk’s aggregate liability
+                    for all claims shall not exceed the amounts you paid to TaskDesk for the Service in the 12 months preceding the event giving rise to liability (or UGX 2,500,000 if no such payments).</p>
+            </div>
+
+            <div id="termination" class="section mb-4">
+                <h2>15) Suspension & Termination</h2>
+                <p>We may suspend or terminate your access if you breach these Terms, fail to pay fees, create undue risk, or where required by law. You may terminate by closing your account. Sections that by their nature should survive will survive termination.</p>
+            </div>
+
+            <div id="changes" class="section mb-4">
+                <h2>16) Changes to the Service or Terms</h2>
+                <p>We may modify features or update these Terms. Material changes will be notified in‑product or by email. Continued use after the effective date constitutes acceptance.</p>
+            </div>
+
+            <div id="law" class="section mb-4">
+                <h2>17) Governing Law & Arbitration</h2>
+                <p>These Terms are governed by the laws of the Republic of Uganda. The courts of Kampala have exclusive jurisdiction, subject to the arbitration clause below.</p>
+                <p><strong>Arbitration:</strong> Unresolved disputes after 30 days’ good‑faith negotiations will be referred to confidential, binding arbitration under the rules of the Centre for Arbitration and Dispute Resolution (CADER), by a single arbitrator
+                    seated in Kampala. Either party may seek injunctive relief in court to protect intellectual property or confidentiality.</p>
+                <p><strong>Class Action Waiver:</strong> To the extent permitted by law, disputes must be brought in an individual capacity, not as a class or representative action.</p>
+            </div>
+
+            <div id="misc" class="section mb-4">
+                <h2>18) Miscellaneous</h2>
+                <ul>
+                    <li><strong>Entire Agreement:</strong> These Terms, the Privacy Notice, and any in‑product policies or order forms constitute the entire agreement.</li>
+                    <li><strong>Severability:</strong> If any provision is unenforceable, the remainder remains in effect.</li>
+                    <li><strong>No Waiver:</strong> Failure to enforce a provision is not a waiver.</li>
+                    <li><strong>Assignment:</strong> You may not assign without our consent; we may assign to an affiliate or in connection with a reorganization.</li>
+                    <li><strong>Notices:</strong> Legal notices to TaskDesk: <a href="mailto:legal@taskdesk.example">legal@taskdesk.example</a>. Service communications: <a href="mailto:support@taskdesk.example">support@taskdesk.example</a>.</li>
+                    <li><strong>Electronic Communications & E‑Sign:</strong> You consent to receive notices electronically and to transact electronically.</li>
+                </ul>
+            </div>
+
+            <div id="definitions" class="section mb-4">
+                <h2>19) Key Definitions</h2>
+                <p><strong>“Client”</strong> means a user purchasing services. <strong>“Freelancer”</strong> means a user supplying services. <strong>“Deliverables”</strong> are work products produced for a Task or Milestone. <strong>“Freelancer Tools”</strong>                    are pre‑existing materials used to create Deliverables. <strong>“User Contract”</strong> is the agreement between Client and Freelancer.</p>
+            </div>
+
+            <div id="contact" class="section mb-5">
+                <h2>20) Contact</h2>
+                <p>Questions about these Terms? Email <a href="mailto:legal@taskdesk.example">legal@taskdesk.example</a> or <a href="mailto:support@taskdesk.example">support@taskdesk.example</a>.</p>
+                <p class="small text-secondary mb-0">This document is provided for general informational purposes and is not legal advice. Consider seeking independent legal counsel to adapt these Terms to your specific operations and jurisdictions.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'base.html' %} {% from 'macros.html' import task_status_progress %} {% block content %} {# Context expected: task: TaskRequest (id, title, category, status, deadline_at) #}
+
+<div class="d-flex justify-content-between align-items-start mb-2">
+    <div>
+        <h3 class="mb-1">Submit Work — Task #{{ task.id }}: {{ task.title }}</h3>
+        <div class="small text-muted">
+            <span class="me-2">Category: {{ task.category or '—' }}</span>
+            <span class="me-2">Deadline: {{ task.deadline_at or '—' }}</span>
+        </div>
+    </div>
+    <div style="min-width:240px">{{ task_status_progress(task.status) }}</div>
+</div>
+
+<div class="row g-4">
+    <!-- Main -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Upload your deliverables</strong>
+                <a class="small" href="{{ url_for('client.task_view', task_id=task.id) }}">View task</a>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Dropzone-like area -->
+                    <div id="dropzone" class="border rounded-3 p-4 mb-3 text-center bg-body-tertiary">
+                        <div class="mb-2 fw-semibold">Drag & drop files here</div>
+                        <div class="text-muted small">or</div>
+                        <div class="mt-2">
+                            <label for="fileInput" class="btn btn-outline-primary">Choose files</label>
+                            <input id="fileInput" name="files" type="file" class="d-none" multiple required>
+                        </div>
+                        <div class="form-text mt-2">Allowed: pdf, docx, xlsx, pptx, images, zip, csv, txt (max 50 MB total).</div>
+                    </div>
+
+                    <!-- Selected files preview -->
+                    <div class="mb-3">
+                        <ul id="fileList" class="list-group small"></ul>
+                        <div id="fileTotal" class="small text-muted mt-2" style="display:none"></div>
+                        <div id="fileError" class="text-danger small mt-2" style="display:none"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Comment (optional)</label>
+                        <textarea name="comment" class="form-control" rows="4" placeholder="What changed in this version? Notes for the reviewer…"></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary">Submit</button>
+                        <a href="{{ url_for('freelancer.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="position-sticky" style="top:1rem;">
+            <div class="card mb-3">
+                <div class="card-header"><strong>Submission Tips</strong></div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li>Prefer a single <span class="fw-semibold">ZIP</span> containing source files + exports.</li>
+                        <li>Use clear filenames: <code>client-project-v2.pdf</code>, <code>dataset-v1.csv</code>.</li>
+                        <li>Add a short note explaining updates since last version.</li>
+                        <li>If large data, provide a link in the comment (Drive/Dropbox) and include a README.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><strong>Quality Checklist</strong></div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li>Meets the brief & audience needs</li>
+                        <li>Company branding & tone followed</li>
+                        <li>Sources/data cited where relevant</li>
+                        <li>Exported formats open correctly</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const form = document.querySelector('form.needs-validation');
+        const dz = document.getElementById('dropzone');
+        const input = document.getElementById('fileInput');
+        const list = document.getElementById('fileList');
+        const total = document.getElementById('fileTotal');
+        const err = document.getElementById('fileError');
+        const MAX_TOTAL = 50 * 1024 * 1024; // 50MB
+
+        function human(n) {
+            const u = ['B', 'KB', 'MB', 'GB'];
+            let i = 0;
+            let s = n;
+            while (s >= 1024 && i < u.length - 1) {
+                s /= 1024;
+                i++;
+            }
+            return s.toFixed((i > 1) ? 2 : 0) + ' ' + u[i];
+        }
+
+        function updateList(files) {
+            list.innerHTML = '';
+            err.style.display = 'none';
+            let sum = 0;
+            Array.from(files).forEach((f, idx) => {
+                sum += f.size || 0;
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `<span>${f.name}</span><span class="badge bg-light text-dark">${human(f.size||0)}</span>`;
+                list.appendChild(li);
+            });
+            if (files.length) {
+                total.style.display = '';
+                total.textContent = `Total size: ${human(sum)} / 50 MB`;
+            } else {
+                total.style.display = 'none';
+            }
+            if (sum > MAX_TOTAL) {
+                err.style.display = '';
+                err.textContent = 'Files exceed the 50 MB limit. Remove some files or compress into a ZIP.';
+            }
+        }
+
+        input.addEventListener('change', () => updateList(input.files));
+
+        // Drag & drop handlers
+        ;
+        ['dragenter', 'dragover'].forEach(evt => dz.addEventListener(evt, e => {
+            e.preventDefault();
+            e.stopPropagation();
+            dz.classList.add('border-primary');
+        }));;
+        ['dragleave', 'drop'].forEach(evt => dz.addEventListener(evt, e => {
+            e.preventDefault();
+            e.stopPropagation();
+            dz.classList.remove('border-primary');
+        }));
+        dz.addEventListener('drop', e => {
+            const dt = e.dataTransfer;
+            if (!dt || !dt.files) return;
+            input.files = dt.files; // assigns FileList to input
+            updateList(dt.files);
+        });
+
+        // Basic Bootstrap validation
+        form.addEventListener('submit', (e) => {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            // Prevent submit if size too large
+            let sum = 0;
+            Array.from(input.files || []).forEach(f => sum += f.size || 0);
+            if (sum > MAX_TOTAL) {
+                e.preventDefault();
+                e.stopPropagation();
+                err.style.display = '';
+                err.textContent = 'Total exceeds 50 MB.';
+            }
+            form.classList.add('was-validated');
+        });
+    })();
+</script>
+
+{% endblock %}

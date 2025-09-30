@@ -1,0 +1,38 @@
+{% extends "email/_base_email.html" %} {% block subject %} Quote ready — Task #{{ task.id }}{% if task.title %}: {{ task.title }}{% endif %} {% endblock %} {% block body %}
+<p>Hi {{ task.client.name if task.client and task.client.name else 'there' }},</p>
+
+<p>
+    We’ve prepared a quote for <strong>Task #{{ task.id }}</strong>{% if task.title %} — <em>{{ task.title }}</em>{% endif %}.
+</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 16px;border:1px solid #eee;border-radius:10px;background:#f9fafb;">
+    <tr>
+        <td style="padding:12px 14px;">
+            <div><strong>Amount:</strong> {{ quote.currency }} {{ '%.2f'|format(quote.proposed_price) }}</div>
+            <div><strong>Payment option:</strong> {{ (quote.pay_option or 'pay_on_delivery')|replace('_',' ') }}</div>
+            {% if quote.valid_until %}
+            <div><strong>Valid until:</strong> {{ quote.valid_until }}</div>
+            {% endif %} {% if quote.message %}
+            <div style="margin-top:8px;"><strong>Notes:</strong> {{ quote.message }}</div>
+            {% endif %}
+        </td>
+    </tr>
+</table>
+
+{% if task_link or accept_url %}
+<p style="margin:18px 0 6px;">
+    {% if accept_url %}
+    <a class="btn" href="{{ accept_url }}">Accept quote</a> {% endif %} {% if task_link %}
+    <a class="btn" href="{{ task_link }}" style="margin-left:8px;">View task</a> {% endif %}
+</p>
+{% endif %} {% if decline_url or task_link %}
+<p class="muted" style="margin-top:8px;">
+    Prefer a different amount or scope? You can decline with a counter offer {% if decline_url %}using <a href="{{ decline_url }}">this link</a>{% elif task_link %}from the task page{% endif %}. We’ll review and can accept your offer or send an adjustment.
+</p>
+{% endif %}
+
+<p class="muted" style="margin-top:14px;">
+    Payment timing: {% set payopt = (quote.pay_option or 'pay_on_delivery')|lower %} {% if payopt == 'pay_now' %} once you accept, an invoice is issued immediately so work can begin. {% else %} you’ll pay at the review stage; we’ll notify you when it’s ready.
+    {% endif %}
+</p>
+{% endblock %}

@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+
+    <head>
+        <meta charset="utf-8">
+        <title>Invoice #{{ invoice.id }}</title>
+        <style>
+            body {
+                font-family: Arial, Helvetica, sans-serif;
+                color: #111827;
+                font-size: 12px;
+            }
+            
+            .wrap {
+                max-width: 780px;
+                margin: 0 auto;
+            }
+            
+            .row {
+                width: 100%;
+            }
+            
+            .left {
+                float: left;
+            }
+            
+            .right {
+                float: right;
+                text-align: right;
+            }
+            
+            .clearfix {
+                clear: both;
+            }
+            
+            .muted {
+                color: #6b7280;
+            }
+            
+            h1 {
+                font-size: 22px;
+                margin: 0 0 4px 0;
+            }
+            
+            .brand img {
+                height: 36px;
+                vertical-align: middle;
+            }
+            
+            .box {
+                border: 1px solid #e5e7eb;
+                border-radius: 6px;
+                padding: 12px;
+            }
+            
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            
+            th,
+            td {
+                padding: 10px;
+                border-bottom: 1px solid #e5e7eb;
+                text-align: left;
+            }
+            
+            th {
+                background: #f9fafb;
+            }
+            
+            .total-row td {
+                font-weight: 700;
+            }
+            
+            .spacer {
+                height: 14px;
+            }
+            
+            .foot {
+                margin-top: 18px;
+                color: #6b7280;
+                font-size: 11px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div class="wrap">
+            <div class="row">
+                <div class="left brand">
+                    {% if logo_data_uri %}
+                    <img src="{{ logo_data_uri }}" alt="TaskDesk" style="height:36px;"> {% endif %}
+
+                    <div style="display:inline-block; margin-left:10px; vertical-align:middle;">
+                        <div style="font-weight:700;">TaskDesk</div>
+                        <div class="muted">taskdesk.example</div>
+                    </div>
+                </div>
+                <div class="right">
+                    <h1>Invoice</h1>
+                    <div>#{{ invoice.id }}</div>
+                    <div class="muted">Issued: {{ invoice.issued_at }}</div>
+                    <div class="muted">Status: {{ invoice.status }}</div>
+                </div>
+            </div>
+            <div class="clearfix"></div>
+
+            <div class="spacer"></div>
+
+            <div class="row">
+                <div class="left box" style="width:48%;">
+                    <div style="font-weight:600; margin-bottom:6px;">Bill To</div>
+                    {% if task.client %}
+                    <div>{{ task.client.name }}</div>
+                    <div class="muted">{{ task.client.email }}</div>
+                    {% else %}
+                    <div>Client</div>
+                    {% endif %}
+                </div>
+                <div class="right box" style="width:48%;">
+                    <div style="font-weight:600; margin-bottom:6px;">Task</div>
+                    <div>#{{ task.id }} — {{ task.title }}</div>
+                    {% set q = (task.quotes|selectattr('status','equalto','accepted')|list|first) %} {% if q %}
+                    <div class="muted">Payment: {{ (q.pay_option or '')|replace('_',' ') }}</div>{% endif %}
+                </div>
+            </div>
+            <div class="clearfix"></div>
+
+            <div class="spacer"></div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th style="text-align:right;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Services for Task #{{ task.id }} — {{ task.title }}</td>
+                        <td style="text-align:right;">{{ invoice.currency }} {{ '%.2f'|format(invoice.amount) }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td style="text-align:right;">Total</td>
+                        <td style="text-align:right;">{{ invoice.currency }} {{ '%.2f'|format(invoice.amount) }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            {% if invoice.status == 'unpaid' %}
+            <div class="spacer"></div>
+            <div class="box">
+                <div style="font-weight:600; margin-bottom:4px;">Payment Instructions</div>
+                <div class="muted">Use the secure link on your Task page to pay online. For alternatives, reply to this email.</div>
+            </div>
+            {% endif %}
+
+            <div class="foot">
+                Thank you for choosing TaskDesk. This invoice is generated electronically and is valid without a signature.
+            </div>
+        </div>
+    </body>
+
+</html>

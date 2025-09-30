@@ -1,0 +1,35 @@
+{% extends 'base.html' %} {% block content %}
+<h3>Add New User</h3>
+<form method="POST" class="row g-3">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="col-md-6">
+        <label class="form-label">Name</label>
+        <input type="text" name="name" class="form-control">
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Email *</label>
+        <input type="email" name="email" class="form-control" required>
+    </div>
+    <div class="col-md-6">
+        <label class="form-label">Phone</label>
+        <input type="text" name="phone" class="form-control">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Role</label>
+        <select name="role" class="form-select">
+      <option value="client">Client</option>
+      <option value="freelancer">Freelancer</option>
+      <option value="admin">Admin</option>
+    </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Password (optional)</label>
+        <input type="password" name="password" class="form-control">
+        <div class="form-text">If left blank, user will need reset link.</div>
+    </div>
+    <div class="col-12">
+        <button class="btn btn-primary">Create User</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('admin.users_list') }}">Cancel</a>
+    </div>
+</form>
+{% endblock %}

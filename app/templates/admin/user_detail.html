@@ -1,0 +1,589 @@
+{% extends 'base.html' %} {% block content %} {# Admin → User Detail Context expected: user: User stats: optional dict (tasks_count, assignments_count, invoices_count, last_active_at) tasks: recent tasks list (created by user if client) assignments: recent
+assignments list (where user is assignee if freelancer) invoices: recent invoices list (for user's tasks) audits: recent AuditEvent list #} {% macro chip(label, cls='bg-light text-dark') -%}
+<span class="badge {{ cls }}">{{ label }}</span> {%- endmacro %}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3">
+    <div>
+        <h3 class="mb-1">User #{{ user.id }} — {{ user.name or '—' }}</h3>
+        <div class="small text-muted">
+            <span class="me-2">{{ user.email }}</span> {% if user.phone %}<span class="me-2">• {{ user.phone }}</span>{% endif %}
+            <span>Joined {{ user.created_at }}</span>
+        </div>
+        <div class="mt-2 d-flex flex-wrap gap-1">
+            {{ chip(user.role, 'bg-primary-subtle text-primary border' if user.role=='freelancer' else ('bg-danger-subtle text-danger border' if user.role=='admin' else 'bg-light text-dark')) }} {% if user.is_email_verified %}{{ chip('email verified', 'bg-success-subtle
+            text-success border') }}{% else %}{{ chip('email unverified') }}{% endif %} {% if user.mfa_enabled %}{{ chip('MFA', 'bg-info text-dark') }}{% endif %} {% if user.status == 'suspended' %}{{ chip('suspended', 'bg-warning text-dark') }}{% endif
+            %} {% if user.deleted_at %}{{ chip('deleted', 'bg-dark') }}{% endif %} {% if user.role=='freelancer' %} {{ chip(user.vetted_status or 'pending', 'bg-secondary-subtle text-secondary border') }} {% if user.rating %}{{ chip('★ ' ~ ('%.1f'|format(user.rating)),
+            'bg-primary-subtle text-primary border') }}{% endif %} {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        {% if not user.deleted_at %} {% if user.status == 'suspended' %}
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#unsuspendModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}">
+        Unsuspend
+      </button> {% else %}
+        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#suspendModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}">
+        Suspend…
+      </button> {% endif %}
+        <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#roleModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}" data-role="{{ user.role }}">
+        Change role…
+      </button>
+        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#resetPwModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}">
+        Send reset link
+      </button>
+        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}">
+        Delete (soft)…
+      </button> {% else %}
+        <span class="badge bg-dark align-self-center">Deleted</span> {% endif %}
+    </div>
+</div>
+
+{# KPI Cards #} {% set tcount = stats.tasks_count if stats and stats.get('tasks_count') is not none else (tasks|length if tasks is defined else 0) %} {% set acount = stats.assignments_count if stats and stats.get('assignments_count') is not none else
+(assignments|length if assignments is defined else 0) %} {% set icount = stats.invoices_count if stats and stats.get('invoices_count') is not none else (invoices|length if invoices is defined else 0) %}
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Tasks</div>
+                <div class="fs-4 fw-bold">{{ tcount }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Assignments</div>
+                <div class="fs-4 fw-bold">{{ acount }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Invoices</div>
+                <div class="fs-4 fw-bold">{{ icount }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-muted small">Last active</div>
+                <div class="fs-6 fw-semibold">{{ stats.last_active_at if stats and stats.get('last_active_at') else (user.last_login_at or '—') }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" id="userTabs" role="tablist">
+                    <li class="nav-item" role="presentation"><button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">Activity</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button" role="tab">Billing</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="compliance-tab" data-bs-toggle="tab" data-bs-target="#compliance" type="button" role="tab">Compliance</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" id="audit-tab" data-bs-toggle="tab" data-bs-target="#audit" type="button" role="tab">Audit</button></li>
+                </ul>
+            </div>
+
+            <div class="card-body">
+                <div class="tab-content">
+                    <!-- Overview -->
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="fw-semibold">Profile</h6>
+                                    <dl class="row small mb-0">
+                                        <dt class="col-5 text-muted">Name</dt>
+                                        <dd class="col-7">{{ user.name or '—' }}</dd>
+                                        <dt class="col-5 text-muted">Email</dt>
+                                        <dd class="col-7">{{ user.email }}</dd>
+                                        <dt class="col-5 text-muted">Phone</dt>
+                                        <dd class="col-7">{{ user.phone or '—' }}</dd>
+                                        <dt class="col-5 text-muted">Role</dt>
+                                        <dd class="col-7">{{ user.role }}</dd>
+                                        <dt class="col-5 text-muted">Created</dt>
+                                        <dd class="col-7">{{ user.created_at }}</dd>
+                                        <dt class="col-5 text-muted">Last login</dt>
+                                        <dd class="col-7">{{ user.last_login_at or '—' }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="fw-semibold">Security</h6>
+                                    <dl class="row small mb-0">
+                                        <dt class="col-6 text-muted">Email verified</dt>
+                                        <dd class="col-6">{{ 'Yes' if user.is_email_verified else 'No' }}</dd>
+                                        <dt class="col-6 text-muted">MFA enabled</dt>
+                                        <dd class="col-6">{{ 'Yes' if user.mfa_enabled else 'No' }}</dd>
+                                        <dt class="col-6 text-muted">Suspended</dt>
+                                        <dd class="col-6">{{ 'Yes' if user.status == 'suspended' else 'No' }}</dd>
+                                        <dt class="col-6 text-muted">Deleted</dt>
+                                        <dd class="col-6">{{ user.deleted_at or 'No' }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+
+                            {% if user.role=='freelancer' %}
+                            <div class="col-12">
+                                <div class="border rounded p-3">
+                                    <h6 class="fw-semibold mb-2">Freelancer Profile</h6>
+                                    <dl class="row small mb-0">
+                                        <dt class="col-3 text-muted">Vetting</dt>
+                                        <dd class="col-9">{{ user.vetted_status or 'pending' }}</dd>
+                                        <dt class="col-3 text-muted">Skills</dt>
+                                        <dd class="col-9">{{ user.skills or '—' }}</dd>
+                                        <dt class="col-3 text-muted">Portfolio</dt>
+                                        <dd class="col-9">{% if user.portfolio_url %}<a href="{{ user.portfolio_url }}" target="_blank">{{ user.portfolio_url }}</a>{% else %}—{% endif %}</dd>
+                                        <dt class="col-3 text-muted">Payout email</dt>
+                                        <dd class="col-9">{{ user.payout_email or '—' }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-12">
+                                <div class="border rounded p-3">
+                                    <form method="POST" action="{{ url_for('admin.user_notes_save', user_id=user.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <label class="form-label">Internal notes</label>
+                                        <textarea name="notes" class="form-control" rows="4" placeholder="Context, risks, preferences…">{{ user.notes_internal or '' }}</textarea>
+                                        <div class="mt-2"><button class="btn btn-sm btn-primary">Save notes</button></div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Activity -->
+                    <div class="tab-pane fade" id="activity" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="border rounded p-3">
+                                    <h6 class="fw-semibold">Recent Tasks</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Title</th>
+                                                    <th>Status</th>
+                                                    <th>Deadline</th>
+                                                    <th>Created</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for t in tasks or [] %}
+                                                <tr>
+                                                    <td class="text-muted">#{{ t.id }}</td>
+                                                    <td>{{ t.title }}</td>
+                                                    <td><span class="badge bg-light text-dark">{{ t.status }}</span></td>
+                                                    <td>{{ t.deadline_at or '—' }}</td>
+                                                    <td>{{ t.created_at or '—' }}</td>
+                                                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.task_triage', task_id=t.id) }}">Open</a></td>
+                                                </tr>
+                                                {% else %}
+                                                <tr>
+                                                    <td colspan="6" class="text-muted">No tasks.</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if user.role=='freelancer' %}
+                            <div class="col-12">
+                                <div class="border rounded p-3">
+                                    <h6 class="fw-semibold">Recent Assignments</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm align-middle">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Task</th>
+                                                    <th>Status</th>
+                                                    <th>Accept by</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for a in assignments or [] %}
+                                                <tr>
+                                                    <td class="text-muted">#{{ a.id }}</td>
+                                                    <td>{{ a.task.title if a.task else '—' }}</td>
+                                                    <td><span class="badge bg-light text-dark">{{ a.status }}</span></td>
+                                                    <td>{{ a.accept_expires_at or '—' }}</td>
+                                                    <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('admin.task_triage', task_id=a.task.id) if a.task else '#' }}">Open</a></td>
+                                                </tr>
+                                                {% else %}
+                                                <tr>
+                                                    <td colspan="5" class="text-muted">No assignments.</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Billing -->
+                    <div class="tab-pane fade" id="billing" role="tabpanel">
+                        <div class="border rounded p-3">
+                            <h6 class="fw-semibold">Invoices</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Task</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Issued</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for inv in invoices or [] %}
+                                        <tr>
+                                            <td class="text-muted">#{{ inv.id }}</td>
+                                            <td>{{ inv.task.title if inv.task else '—' }}</td>
+                                            <td>{{ inv.currency }} {{ '%.2f'|format(inv.amount) }}</td>
+                                            <td>
+                                                {% if inv.status=='paid' %}<span class="badge bg-success">paid</span> {% elif inv.status=='unpaid' %}<span class="badge bg-warning text-dark">unpaid</span> {% else %}<span class="badge bg-light text-dark">{{ inv.status }}</span>{%
+                                                endif %}
+                                            </td>
+                                            <td>{{ inv.issued_at or '—' }}</td>
+                                            <td class="text-end">
+                                                {% if inv.status=='unpaid' %}<a class="btn btn-sm btn-outline-primary" href="{{ url_for('payments.pay_invoice', invoice_id=inv.id) }}">Pay link</a>{% endif %}
+                                            </td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="6" class="text-muted">No invoices.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Compliance -->
+                    <div class="tab-pane fade" id="compliance" role="tabpanel">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="fw-semibold d-flex justify-content-between align-items-center">
+                                        Verification {% if user.kyc_status == 'approved' %}
+                                        <span class="badge bg-success">Approved</span> {% elif user.kyc_status == 'submitted' %}
+                                        <span class="badge bg-warning text-dark">In review</span> {% elif user.kyc_status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span> {% else %}
+                                        <span class="badge bg-light text-dark">Unverified</span> {% endif %}
+                                    </h6>
+                                    <dl class="row small mb-0">
+                                        <dt class="col-6 text-muted">Email verified</dt>
+                                        <dd class="col-6">{{ 'Yes' if user.is_email_verified else 'No' }}</dd>
+                                        <dt class="col-6 text-muted">KYC status</dt>
+                                        <dd class="col-6">{{ user.kyc_status or 'unverified' }}</dd>
+                                        <dt class="col-6 text-muted">Last checked</dt>
+                                        <dd class="col-6">{{ user.kyc_checked_at or '—' }}</dd>
+                                        <dt class="col-6 text-muted">Data export</dt>
+                                        <dd class="col-6">{{ user.data_exported_at or '—' }}</dd>
+                                        <dt class="col-6 text-muted">Deletion requested</dt>
+                                        <dd class="col-6">{{ user.deletion_requested_at or '—' }}</dd>
+                                    </dl>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded p-3 h-100">
+                                    <h6 class="fw-semibold">Compliance actions</h6>
+                                    <form class="d-flex flex-column gap-2" method="POST" action="{{ url_for('admin.user_compliance_action', user_id=user.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="input-group input-group-sm">
+                                            <label class="input-group-text">Export data</label>
+                                            <button class="btn btn-outline-secondary">Run export</button>
+                                        </div>
+                                        <div class="input-group input-group-sm">
+                                            <label class="input-group-text">Erase PII</label>
+                                            <button class="btn btn-outline-danger" name="erase" value="1">Queue erasure</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KYC Review Panel -->
+                        <div class="border rounded p-3 mt-3">
+                            <h6 class="fw-semibold mb-3">KYC submission</h6>
+                            {% set latest = kyc if kyc is defined else (user.kyc_submissions[-1] if user.kyc_submissions is defined and user.kyc_submissions else None) %} {% if latest %}
+                            <div class="row g-3 align-items-start">
+                                <div class="col-md-4">
+                                    <div class="small text-muted">Submitted</div>
+                                    <div>{{ latest.submitted_at }}</div>
+                                    <div class="small text-muted mt-2">Doc type</div>
+                                    <div class="text-capitalize">{{ latest.doc_type.replace('_',' ') if latest.doc_type else '—' }}</div>
+                                    <div class="small text-muted mt-2">ID number</div>
+                                    <div>{{ latest.id_number or '—' }}</div>
+                                    <div class="small text-muted mt-2">Country</div>
+                                    <div>{{ latest.country or '—' }}</div>
+                                    {% if latest.review_note %}
+                                    <div class="small text-muted mt-2">Review note</div>
+                                    <div>{{ latest.review_note }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="small text-muted mb-1">Front</div>
+                                            {% if latest.file_id_front %}
+                                            <a class="d-block border rounded ratio ratio-16x9 overflow-hidden" href="{{ url_for('admin.secure_file', file_id=latest.file_id_front) }}" target="_blank">
+                                                <img class="w-100 h-100 object-fit-contain" src="{{ url_for('admin.secure_thumb', file_id=latest.file_id_front) }}" alt="Front of ID">
+                                            </a>
+                                            {% else %}
+                                            <div class="text-muted">—</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="small text-muted mb-1">Back</div>
+                                            {% if latest.file_id_back %}
+                                            <a class="d-block border rounded ratio ratio-16x9 overflow-hidden" href="{{ url_for('admin.secure_file', file_id=latest.file_id_back) }}" target="_blank">
+                                                <img class="w-100 h-100 object-fit-contain" src="{{ url_for('admin.secure_thumb', file_id=latest.file_id_back)  }}" alt="Back of ID">
+                                            </a>
+                                            {% else %}
+                                            <div class="text-muted">—</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="small text-muted mb-1">Selfie</div>
+                                            {% if latest.file_id_selfie %}
+                                            <a class="d-block border rounded ratio ratio-16x9 overflow-hidden" href="{{ url_for('admin.secure_file', file_id=latest.file_id_selfie) }}" target="_blank">
+                                                <img class="w-100 h-100 object-fit-contain" src="{{ url_for('admin.secure_thumb', file_id=latest.file_id_selfie)  }}" alt="Selfie with ID">
+                                            </a>
+                                            {% else %}
+                                            <div class="text-muted">—</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form class="mt-3 d-flex flex-wrap gap-2" method="POST" action="{{ url_for('admin.kyc_review', user_id=user.id) }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="submission_id" value="{{ latest.id }}">
+                                <input type="text" class="form-control flex-grow-1" name="note" placeholder="Review note (visible to admins and optionally user)">
+                                <div class="btn-group" role="group">
+                                    <button class="btn btn-success" name="action" value="approve">Approve</button>
+                                    <button class="btn btn-outline-danger" name="action" value="reject">Reject</button>
+                                </div>
+                            </form>
+                            {% else %}
+                            <div class="text-muted">No submission from this user yet.</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Audit -->
+                    <div class="tab-pane fade" id="audit" role="tabpanel">
+                        <div class="border rounded p-3">
+                            <h6 class="fw-semibold">Recent admin actions</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>When</th>
+                                            <th>Actor</th>
+                                            <th>Action</th>
+                                            <th>Reason</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for ev in audits or [] %}
+                                        <tr>
+                                            <td>{{ ev.created_at }}</td>
+                                            <td>{{ ev.actor.name if ev.actor else '—' }}</td>
+                                            <td>{{ ev.action }}</td>
+                                            <td class="small">{{ ev.reason or '—' }}</td>
+                                            <td class="small">{{ ev.meta_json or '—' }}</td>
+                                        </tr>
+                                        {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-muted">No audit events.</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.tab-content -->
+            </div>
+            <!-- /.card-body -->
+        </div>
+        <!-- /.card -->
+    </div>
+
+    <div class="col-lg-4">
+        <div class="position-sticky" style="top:1rem;">
+            <div class="card mb-3">
+                <div class="card-header"><strong>Quick Actions</strong></div>
+                <div class="card-body d-flex flex-wrap gap-2">
+                    {% if not user.deleted_at %} {% if user.status == 'suspended' %}
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#unsuspendModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}">
+                Unsuspend
+              </button> {% else %}
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#suspendModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}">
+                Suspend…
+              </button> {% endif %}
+                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#roleModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}" data-role="{{ user.role }}">
+              Change role…
+            </button>
+                    <button class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#resetPwModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}">
+              Send reset
+            </button>
+                    <button class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal" data-user-id="{{ user.id }}" data-user-name="{{ user.name or user.email }}">
+              Delete (soft)…
+            </button> {% else %}
+                    <div class="text-muted small">User is deleted.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><strong>At a glance</strong></div>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex justify-content-between align-items-center"><span>Tasks</span><span class="badge bg-light text-dark">{{ tcount }}</span></div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center"><span>Assignments</span><span class="badge bg-light text-dark">{{ acount }}</span></div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center"><span>Invoices</span><span class="badge bg-light text-dark">{{ icount }}</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Reuse modals from users_list semantics #}
+<div class="modal fade" id="suspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_suspend') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="suspendUserId">
+            <div class="modal-header">
+                <h5 class="modal-title">Suspend user</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">Suspending <span id="suspendUserName" class="fw-semibold"></span>.</div>
+                <label class="form-label">Reason</label>
+                <textarea name="reason" class="form-control" rows="3" required></textarea>
+            </div>
+            <div class="modal-footer"><button class="btn btn-warning">Suspend</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="unsuspendModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_unsuspend') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="unsuspendUserId">
+            <div class="modal-header">
+                <h5 class="modal-title">Unsuspend user</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">Unsuspending <span id="unsuspendUserName" class="fw-semibold"></span>.</div>
+            <div class="modal-footer"><button class="btn btn-success">Unsuspend</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="roleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_change_role') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="roleUserId">
+            <div class="modal-header">
+                <h5 class="modal-title">Change role</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">Changing role for <span id="roleUserName" class="fw-semibold"></span>.</div>
+                <select class="form-select" name="role" id="roleCurrent" required>
+          <option value="client">Client</option>
+          <option value="freelancer">Freelancer</option>
+          <option value="admin">Admin</option>
+        </select>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary">Update role</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="resetPwModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_send_reset') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="resetUserId">
+            <div class="modal-header">
+                <h5 class="modal-title">Send password reset</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">Send reset email to <span id="resetUserName" class="fw-semibold"></span>?</div>
+            <div class="modal-footer"><button class="btn btn-outline-primary">Send link</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" method="POST" action="{{ url_for('admin.user_delete') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="user_id" id="deleteUserId">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete user (soft)</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2">Soft-delete <span id="deleteUserName" class="fw-semibold"></span>? This disables login but preserves historical records.</div>
+                <div class="alert alert-warning small mb-0">Reversible by an admin. For full erasure, run a compliance job.</div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-danger">Delete</button></div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Fill modals with user info (reads data-user-id / data-user-name / data-role)
+    (function() {
+        function wire(modalId, idInputId, nameSpanId, roleSelectId) {
+            const modal = document.getElementById(modalId);
+            if (!modal) return;
+            modal.addEventListener('show.bs.modal', (evt) => {
+                const btn = evt.relatedTarget;
+                const id = btn ? .getAttribute('data-user-id') || '';
+                const name = btn ? .getAttribute('data-user-name') || '';
+                const role = btn ? .getAttribute('data-role') || '';
+                const idInput = document.getElementById(idInputId);
+                const nameSpan = nameSpanId ? document.getElementById(nameSpanId) : null;
+                const roleSel = roleSelectId ? document.getElementById(roleSelectId) : null;
+                if (idInput) idInput.value = id;
+                if (nameSpan) nameSpan.textContent = name ? `${name} (ID ${id})` : `User ID: ${id}`;
+                if (roleSel && role) roleSel.value = role;
+            });
+        }
+        wire('suspendModal', 'suspendUserId', 'suspendUserName');
+        wire('unsuspendModal', 'unsuspendUserId', 'unsuspendUserName');
+        wire('roleModal', 'roleUserId', 'roleUserName', 'roleCurrent');
+        wire('resetPwModal', 'resetUserId', 'resetUserName');
+        wire('deleteModal', 'deleteUserId', 'deleteUserName');
+    })();
+</script>
+
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "email/_base_email.html" %} {% block subject %} New quote created — Task #{{ task.id }}{% if task.title %}: {{ task.title }}{% endif %} {% endblock %} {% block body %}
+<h2 style="margin:0 0 16px 0;">New Quote Created</h2>
+
+<p>Hello {{ task.client.name or "there" }},</p>
+
+<p>
+    A new quote has been created for your task
+    <strong>#{{ task.id }}</strong>{% if task.title %} — <em>{{ task.title }}</em>{% endif %}.
+</p>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:12px 0 16px;border:1px solid #eee;border-radius:10px;background:#f9fafb;">
+    <tr>
+        <td style="padding:12px 14px;">
+            <div><strong>Amount:</strong> {{ quote.currency }} {{ '%.2f'|format(quote.proposed_price) }}</div>
+            <div><strong>Payment option:</strong> {{ (quote.pay_option or 'pay_on_delivery')|replace('_',' ')|title }}</div>
+            {% if quote.valid_until %}
+            <div><strong>Valid until:</strong> {{ quote.valid_until }}</div>
+            {% endif %} {% if quote.message %}
+            <div style="margin-top:8px;"><strong>Notes:</strong> {{ quote.message }}</div>
+            {% endif %}
+        </td>
+    </tr>
+</table>
+
+<p style="margin:18px 0 6px;">
+    <a class="btn" href="{{ url_for('client.task_view', task_id=task.id, _external=True) }}">Review Task</a>
+</p>
+
+<p class="muted" style="margin-top:8px;">
+    Prefer a different amount or scope? Open the task and choose <em>Decline / Suggest Amount</em>. We’ll review your counter offer quickly.
+</p>
+{% endblock %}
